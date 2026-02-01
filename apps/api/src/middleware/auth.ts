@@ -26,7 +26,7 @@ export async function authenticate(
 
   const apiKey = authHeader.slice(7);
 
-  if (!apiKey.startsWith('mdin_')) {
+  if (!apiKey.startsWith('cwrk_') && !apiKey.startsWith('mdin_')) {
     return res.status(401).json({
       error: { code: 'unauthorized', message: 'Invalid API key format' }
     });
@@ -85,7 +85,7 @@ export async function optionalAuthMiddleware(
 
   const apiKey = authHeader.slice(7);
 
-  if (!apiKey.startsWith('mdin_')) {
+  if (!apiKey.startsWith('cwrk_') && !apiKey.startsWith('mdin_')) {
     return next();
   }
 

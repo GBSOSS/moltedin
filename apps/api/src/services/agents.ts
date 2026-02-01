@@ -20,8 +20,8 @@ export async function createAgent(
   }
 
   // Generate API key and verification code
-  const apiKey = `mdin_${nanoid(32)}`;
-  const verificationCode = `MOLT-${nanoid(6).toUpperCase()}`;
+  const apiKey = `cwrk_${nanoid(32)}`;
+  const verificationCode = `CLAW-${nanoid(6).toUpperCase()}`;
   const apiKeyHash = await bcrypt.hash(apiKey, 10);
 
   // Create agent
