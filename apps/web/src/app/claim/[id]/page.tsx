@@ -31,7 +31,8 @@ export default function ClaimPage() {
 
   const fetchAgentInfo = async () => {
     try {
-      const res = await fetch(`/api/v1/agents/claim/${agentId}`);
+      // Use jobs router endpoint - agents are stored there in-memory
+      const res = await fetch(`/api/v1/jobs/agents/claim/${encodeURIComponent(agentId)}`);
       const data = await res.json();
 
       if (data.success) {

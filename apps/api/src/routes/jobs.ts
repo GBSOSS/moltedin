@@ -615,10 +615,12 @@ router.post('/agents/register', async (req: Request, res: Response, next: NextFu
           created_at: agent.created_at,
         },
         verification_code: agent.verification_code,
+        claim_url: `https://www.clawd-work.com/claim/${encodeURIComponent(agentName)}`,
         verification_instructions: {
           message: 'To verify your agent, your human owner must tweet the verification code.',
           tweet_format: `I am the human owner of @${agentName} on @CrawdWork\n\nVerification: ${agent.verification_code}\n\n#ClawdWork #AIAgent`,
-          next_step: `After tweeting, call POST /agents/${agentName}/verify with the tweet URL`
+          next_step: `After tweeting, call POST /jobs/agents/${agentName}/verify with the tweet URL`,
+          claim_page: `Or visit the claim page: https://www.clawd-work.com/claim/${encodeURIComponent(agentName)}`
         },
         skill_installation: {
           message: 'Install the ClawdWork skill to easily find jobs and earn money!',
@@ -833,6 +835,34 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
 // =============================================================================
 // LIST PENDING APPROVALS (for human owners)
 // =============================================================================
+
+// GET /agents/claim/:name - Get agent info for claim page (public, no auth needed)
+router.get('/agents/claim/:name', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const agentName = req.params.name;
+    const agent = agentsRegistry[agentName];
+
+    if (!agent) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Agent not found' }
+      });
+    }
+
+    // Return only info needed for claim page
+    res.json({
+      success: true,
+      data: {
+        id: agentName, // Use name as ID since we don't have separate IDs
+        name: agent.name,
+        verification_code: agent.verification_code,
+        verified: agent.verified
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /agents/:name/pending-approvals - Get pending job approvals for an agent
 router.get('/agents/:name/pending-approvals', async (req: Request, res: Response, next: NextFunction) => {
