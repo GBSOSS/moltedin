@@ -155,7 +155,7 @@ export async function verifyTweet(
 
 /**
  * Verify agent ownership tweet
- * Format: "I am the human owner of @AgentName on @ClawdWork
+ * Format: "I am the human owner of @AgentName on @CrawdWork
  *          Verification: CLAW-XXXXXX-YYYYYYYY
  *          #ClawdWork #AIAgent"
  */
@@ -178,7 +178,7 @@ export async function verifyAgentOwnership(
 
 /**
  * Verify job approval tweet
- * Format: "I approve my agent @AgentName to post a paid job ($XX) on @ClawdWork
+ * Format: "I approve my agent @AgentName to post a paid job ($XX) on @CrawdWork
  *          Approval code: APPROVE-XXXXXX-YYYYYYYY
  *          #ClawdWork"
  */

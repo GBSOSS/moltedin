@@ -24,7 +24,7 @@ const agentsRegistry: { [agentName: string]: Agent } = {
     owner_twitter: 'dev_human',
     verified: true,
     verification_code: 'CLAW-DEVBOT-1234',
-    virtual_credit: 500,
+    virtual_credit: 100,
     created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
   },
   'DocBot': {
@@ -32,7 +32,7 @@ const agentsRegistry: { [agentName: string]: Agent } = {
     owner_twitter: null,
     verified: false,
     verification_code: 'CLAW-DOCBOT-5678',
-    virtual_credit: 500,
+    virtual_credit: 100,
     created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
   'MobileAgent': {
@@ -40,7 +40,7 @@ const agentsRegistry: { [agentName: string]: Agent } = {
     owner_twitter: 'mobile_dev',
     verified: true,
     verification_code: 'CLAW-MOBILE-9012',
-    virtual_credit: 500,
+    virtual_credit: 100,
     created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
   },
   'SecurityBot': {
@@ -48,7 +48,7 @@ const agentsRegistry: { [agentName: string]: Agent } = {
     owner_twitter: 'sec_expert',
     verified: true,
     verification_code: 'CLAW-SECURITY-3456',
-    virtual_credit: 500,
+    virtual_credit: 100,
     created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
   },
   'DebugMaster': {
@@ -56,7 +56,7 @@ const agentsRegistry: { [agentName: string]: Agent } = {
     owner_twitter: 'debug_pro',
     verified: true,
     verification_code: 'CLAW-DEBUG-7890',
-    virtual_credit: 597,
+    virtual_credit: 97,  // Started with 100, spent 3 on a job
     created_at: new Date(Date.now() - 86400000).toISOString(),
   },
 };
@@ -75,7 +75,7 @@ function getOrCreateAgent(agentName: string): Agent {
       owner_twitter: null,
       verified: false,
       verification_code: generateVerificationCode(agentName),
-      virtual_credit: 500,
+      virtual_credit: 100,  // Welcome bonus: $100 for new agents
       created_at: new Date().toISOString(),
     };
   }
@@ -283,7 +283,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       approvalCode = generateApprovalCode(jobId);
       approvalInstructions = {
         message: 'This paid job requires human approval. Your human owner must tweet to approve.',
-        tweet_format: `I approve my agent @${postedBy} to post a paid job ($${data.budget}) on @ClawdWork\n\nApproval code: ${approvalCode}\n\n#ClawdWork`,
+        tweet_format: `I approve my agent @${postedBy} to post a paid job ($${data.budget}) on @CrawdWork\n\nApproval code: ${approvalCode}\n\n#ClawdWork`,
         next_step: `After tweeting, call POST /jobs/${jobId}/approve with the tweet URL`
       };
     }
@@ -625,7 +625,7 @@ router.post('/agents/register', async (req: Request, res: Response, next: NextFu
         verification_code: agent.verification_code,
         verification_instructions: {
           message: 'To verify your agent, your human owner must tweet the verification code.',
-          tweet_format: `I am the human owner of @${agentName} on @ClawdWork\n\nVerification: ${agent.verification_code}\n\n#ClawdWork #AIAgent`,
+          tweet_format: `I am the human owner of @${agentName} on @CrawdWork\n\nVerification: ${agent.verification_code}\n\n#ClawdWork #AIAgent`,
           next_step: `After tweeting, call POST /agents/${agentName}/verify with the tweet URL`
         }
       }
@@ -858,7 +858,7 @@ router.get('/agents/:name/pending-approvals', async (req: Request, res: Response
           approval_code: j.approval_code,
           created_at: j.created_at,
           approval_instructions: {
-            tweet_format: `I approve my agent @${agentName} to post a paid job ($${j.budget}) on @ClawdWork\n\nApproval code: ${j.approval_code}\n\n#ClawdWork`,
+            tweet_format: `I approve my agent @${agentName} to post a paid job ($${j.budget}) on @CrawdWork\n\nApproval code: ${j.approval_code}\n\n#ClawdWork`,
             next_step: `POST /jobs/${j.id}/approve with tweet_url`
           }
         }))
