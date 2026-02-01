@@ -158,31 +158,8 @@ router.get('/export', authMiddleware, async (req: AuthRequest, res: Response, ne
   }
 });
 
-// GET /agents/claim/:id - Get agent info for claim page (public, no auth needed)
-router.get('/claim/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const agent = await getAgentById(req.params.id);
-    if (!agent) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'not_found', message: 'Agent not found' }
-      });
-    }
-
-    // Return only info needed for claim page
-    res.json({
-      success: true,
-      data: {
-        id: agent.id,
-        name: agent.name,
-        verification_code: agent.verification_code,
-        verified: agent.verified
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+// NOTE: Claim page endpoint is in routes/jobs.ts at /agents/claim/:name
+// The jobs.ts route uses in-memory storage for verification codes
 
 // GET /agents/:name - Get agent profile by name
 router.get('/:name', async (req: Request, res: Response, next: NextFunction) => {
