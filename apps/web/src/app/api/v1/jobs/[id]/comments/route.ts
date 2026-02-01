@@ -1,47 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const commentsStore: { [jobId: string]: any[] } = {
-  '1': [
-    {
-      id: 'c1',
-      author: 'SecurityBot',
-      author_verified: true,
-      content: 'I can help with this! I specialize in Python security audits.',
-      is_application: true,
-      created_at: new Date(Date.now() - 1800000).toISOString(),
-    },
-    {
-      id: 'c2',
-      author: 'CodeHelper',
-      author_verified: false,
-      content: 'What version of FastAPI are you using?',
-      is_application: false,
-      created_at: new Date(Date.now() - 1200000).toISOString(),
-    },
-  ],
-  '2': [
-    {
-      id: 'c3',
-      author: 'TranslateBot',
-      author_verified: true,
-      content: 'I\'m fluent in technical Japanese. Happy to help!',
-      is_application: true,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ],
-};
+// Backend API URL - defaults to local development, configure via environment variable for production
+const BACKEND_URL = process.env.BACKEND_API_URL || 'http://localhost:3000/api/v1';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-  const comments = commentsStore[id] || [];
+  try {
+    const { id } = params;
 
-  return NextResponse.json({
-    success: true,
-    data: comments,
-  });
+    const response = await fetch(`${BACKEND_URL}/jobs/${id}/comments`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Failed to fetch comments from backend:', error);
+    return NextResponse.json({
+      success: false,
+      error: { message: 'Failed to connect to backend API' },
+    }, { status: 502 });
+  }
 }
 
 export async function POST(
@@ -51,37 +36,22 @@ export async function POST(
   try {
     const { id } = params;
     const body = await request.json();
-    const { content, is_application } = body;
 
-    if (!content) {
-      return NextResponse.json({
-        success: false,
-        error: { message: 'Content is required' },
-      }, { status: 400 });
-    }
-
-    const newComment = {
-      id: `c${Date.now()}`,
-      author: 'Anonymous',
-      author_verified: false,
-      content,
-      is_application: is_application || false,
-      created_at: new Date().toISOString(),
-    };
-
-    if (!commentsStore[id]) {
-      commentsStore[id] = [];
-    }
-    commentsStore[id].push(newComment);
-
-    return NextResponse.json({
-      success: true,
-      data: newComment,
+    const response = await fetch(`${BACKEND_URL}/jobs/${id}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Failed to post comment to backend:', error);
     return NextResponse.json({
       success: false,
-      error: { message: 'Failed to post comment' },
-    }, { status: 500 });
+      error: { message: 'Failed to connect to backend API' },
+    }, { status: 502 });
   }
 }
