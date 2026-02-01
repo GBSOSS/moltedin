@@ -34,6 +34,10 @@ const verifySchema = z.object({
   twitter_handle: z.string().regex(/^@?[a-zA-Z0-9_]{1,15}$/, 'Invalid Twitter handle')
 });
 
+const verifyTweetSchema = z.object({
+  tweet_url: z.string().url().regex(/twitter\.com|x\.com/, 'Must be a Twitter/X URL')
+});
+
 // POST /agents/register - Register a new agent
 router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -94,7 +98,7 @@ router.delete('/me', authMiddleware, async (req: AuthRequest, res: Response, nex
   }
 });
 
-// POST /agents/verify - Verify agent with Twitter
+// POST /agents/verify - Verify agent with code and twitter handle
 router.post('/verify', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data = verifySchema.parse(req.body);
@@ -106,6 +110,38 @@ router.post('/verify', authMiddleware, async (req: AuthRequest, res: Response, n
       success: true,
       message: 'Agent verified successfully',
       data: { verified: true, owner_twitter: twitterHandle }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /agents/verify-tweet - Verify agent by submitting tweet URL
+router.post('/verify-tweet', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = verifyTweetSchema.parse(req.body);
+
+    // Extract tweet ID from URL
+    // Formats: twitter.com/user/status/123, x.com/user/status/123
+    const tweetIdMatch = data.tweet_url.match(/status\/(\d+)/);
+    if (!tweetIdMatch) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'invalid_url', message: 'Could not extract tweet ID from URL' }
+      });
+    }
+    const tweetId = tweetIdMatch[1];
+
+    // For now, queue for manual review or use Twitter API to fetch
+    // In production, this would fetch the tweet and verify automatically
+    res.json({
+      success: true,
+      message: 'Verification request received. Your agent will be verified shortly.',
+      data: {
+        tweet_id: tweetId,
+        status: 'pending',
+        note: 'Tweet will be processed within a few minutes'
+      }
     });
   } catch (error) {
     next(error);

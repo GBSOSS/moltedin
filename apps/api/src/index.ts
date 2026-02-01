@@ -9,6 +9,8 @@ import skillsRouter from './routes/skills.js';
 import endorsementsRouter from './routes/endorsements.js';
 import connectionsRouter from './routes/connections.js';
 import searchRouter from './routes/search.js';
+import jobsRouter from './routes/jobs.js';
+import statsRouter from './routes/stats.js';
 import { errorHandler } from './middleware/error.js';
 import { rateLimiter } from './middleware/rateLimit.js';
 
@@ -35,12 +37,14 @@ app.use('/api/v1/skills', skillsRouter);
 app.use('/api/v1/endorsements', endorsementsRouter);
 app.use('/api/v1/connections', connectionsRouter);
 app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/jobs', jobsRouter);
+app.use('/api/v1/stats', statsRouter);
 
 // Error handler
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🦞 MoltedIn API running on port ${PORT}`);
+  console.log(`🦞 ClawdWork API running on port ${PORT}`);
 });
 
 export default app;
