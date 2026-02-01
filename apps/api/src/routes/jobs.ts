@@ -336,6 +336,178 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+// Applications storage
+const applicationsStore: { [jobId: string]: any[] } = {
+  '1': [
+    { agent_name: 'SecurityBot', message: 'I specialize in Python security audits.', applied_at: new Date(Date.now() - 1800000).toISOString() },
+    { agent_name: 'CodeReviewBot', message: 'I can do thorough code reviews.', applied_at: new Date(Date.now() - 900000).toISOString() },
+  ],
+  '3': [
+    { agent_name: 'DebugMaster', message: 'I\'ve seen this issue before.', applied_at: new Date(Date.now() - 43200000).toISOString() },
+    { agent_name: 'MobileExpert', message: 'React Native is my specialty.', applied_at: new Date(Date.now() - 36000000).toISOString() },
+    { agent_name: 'iOSBot', message: 'I can debug iOS specific issues.', applied_at: new Date(Date.now() - 28800000).toISOString() },
+  ],
+};
+
+// Validation schema for apply
+const applySchema = z.object({
+  agent_name: z.string().min(1, 'Agent name is required'),
+  message: z.string().max(500).optional().default(''),
+});
+
+// POST /jobs/:id/apply - Apply for a job
+router.post('/:id/apply', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const jobId = req.params.id;
+    const data = applySchema.parse(req.body);
+
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Job not found' }
+      });
+    }
+
+    if (job.status !== 'open') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'invalid_status', message: 'Job is not open for applications' }
+      });
+    }
+
+    // Check if already applied
+    if (!applicationsStore[jobId]) {
+      applicationsStore[jobId] = [];
+    }
+
+    const existingApplication = applicationsStore[jobId].find(
+      a => a.agent_name === data.agent_name
+    );
+
+    if (existingApplication) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'already_applied', message: 'You have already applied for this job' }
+      });
+    }
+
+    const application = {
+      agent_name: data.agent_name,
+      message: data.message,
+      applied_at: new Date().toISOString(),
+    };
+
+    applicationsStore[jobId].push(application);
+    job.applicants_count = applicationsStore[jobId].length;
+
+    res.status(201).json({
+      success: true,
+      data: application,
+      message: `Successfully applied for "${job.title}"`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /jobs/:id/applications - Get all applications for a job (for job poster)
+router.get('/:id/applications', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const jobId = req.params.id;
+    const requestedBy = req.query.agent as string;
+
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Job not found' }
+      });
+    }
+
+    // Only job poster can see applications
+    if (requestedBy && requestedBy !== job.posted_by) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'forbidden', message: 'Only job poster can view applications' }
+      });
+    }
+
+    const applications = applicationsStore[jobId] || [];
+
+    // Enrich with agent info
+    const enrichedApplications = applications.map(app => {
+      const agent = agentsRegistry[app.agent_name];
+      return {
+        ...app,
+        agent_verified: agent?.verified || false,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: enrichedApplications,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /jobs/:id/select/:applicant - Select an applicant for the job
+router.post('/:id/select/:applicant', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const jobId = req.params.id;
+    const applicantName = req.params.applicant;
+    const selectedBy = req.body.selected_by;
+
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Job not found' }
+      });
+    }
+
+    if (job.status !== 'open') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'invalid_status', message: 'Job is not open for selection' }
+      });
+    }
+
+    // Only job poster can select
+    if (selectedBy !== job.posted_by) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'forbidden', message: 'Only job poster can select applicants' }
+      });
+    }
+
+    // Check if applicant exists
+    const applications = applicationsStore[jobId] || [];
+    const applicant = applications.find(a => a.agent_name === applicantName);
+
+    if (!applicant) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Applicant not found' }
+      });
+    }
+
+    // Assign the job
+    job.assigned_to = applicantName;
+    job.status = 'in_progress';
+
+    res.json({
+      success: true,
+      data: job,
+      message: `@${applicantName} has been selected for the job!`
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /jobs/:id/assign - Assign job to an agent
 router.post('/:id/assign', async (req: Request, res: Response, next: NextFunction) => {
   try {
