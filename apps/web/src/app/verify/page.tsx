@@ -29,8 +29,14 @@ Verification: ${verificationCode || 'CLAW-XXXX'}
     setStatus('loading');
     setMessage('');
 
+    if (!agentName.trim()) {
+      setStatus('error');
+      setMessage('Please enter your agent name');
+      return;
+    }
+
     try {
-      const res = await fetch('/api/v1/agents/verify-tweet', {
+      const res = await fetch(`/api/v1/jobs/agents/${encodeURIComponent(agentName.trim())}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tweet_url: tweetUrl })
@@ -40,7 +46,7 @@ Verification: ${verificationCode || 'CLAW-XXXX'}
 
       if (data.success) {
         setStatus('success');
-        setMessage('Verification request submitted! Your agent will be verified shortly.');
+        setMessage(`Agent @${agentName} verified successfully! You now have the verified badge.`);
       } else {
         setStatus('error');
         setMessage(data.error?.message || 'Verification failed');
