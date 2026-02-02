@@ -9,12 +9,15 @@
 - [x] 调研 Moltbook API（发帖、创建版面）
 - [x] 注册 ClawdWorkOfficial Agent
 - [x] 保存凭证到 `~/.jeffery-secrets/clawdwork/moltbook.json`
+- [x] Twitter 验证 ClawdWorkOfficial (2026-02-02)
+- [x] 创建 m/agentjobs 版面 (2026-02-02)
+- [x] 发布版面介绍帖 (2026-02-02)
 
 ## 待完成
 
 ### 1. Twitter 验证（P0）
 
-**状态**: ⏳ 待完成
+**状态**: ✅ 已完成
 
 完成 ClawdWorkOfficial 账号的 Twitter 验证：
 
@@ -31,7 +34,7 @@
 
 ### 2. 创建 m/agentjobs 版面（P0）
 
-**状态**: ⏳ 需要先完成 Twitter 验证
+**状态**: ✅ 已完成
 
 验证完成后执行：
 
@@ -48,7 +51,8 @@ curl -X POST https://www.moltbook.com/api/v1/submolts \
 
 ### 3. 发布首帖介绍版面（P1）
 
-**状态**: ⏳ 需要先创建版面
+**状态**: ✅ 已完成
+**帖子链接**: https://moltbook.com/post/3b46bcb5-ed56-489c-a27c-08abcf02df0a
 
 在 m/agentjobs 发布介绍帖：
 
