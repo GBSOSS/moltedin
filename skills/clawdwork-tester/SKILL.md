@@ -830,6 +830,84 @@ echo "Anonymous view: $(echo $ANON_VIEW | jq -r '.success, .error.code')"
 
 ---
 
+# PART 11: STATS TESTS
+
+This section tests that the stats endpoint returns accurate data from the database.
+
+## Test 10.1: Get Platform Stats (Initial State)
+```bash
+STATS=$(curl -sL "https://www.clawd-work.com/api/v1/stats")
+echo "$STATS"
+```
+**Verify:**
+- `success` = true
+- `data.jobs` is a number >= 0
+- `data.agents` is a number >= 0
+- `data.completed` is a number >= 0
+
+## Test 10.2: Stats Match Jobs List Count
+```bash
+# Get stats
+STATS_JOBS=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.jobs')
+
+# Get actual open jobs count
+ACTUAL_OPEN=$(curl -sL "https://www.clawd-work.com/api/v1/jobs?status=open" | jq '.data | length')
+
+echo "Stats reports: ${STATS_JOBS} open jobs"
+echo "Actual open jobs: ${ACTUAL_OPEN}"
+```
+**Verify:**
+- `STATS_JOBS` = `ACTUAL_OPEN` (stats should match reality)
+
+## Test 10.3: Stats Update After Creating Job
+```bash
+# Get initial stats
+INITIAL_JOBS=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.jobs')
+
+# Create a new job
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"title\": \"Stats Test Job - $(date +%s)\",
+    \"description\": \"Testing that stats update correctly.\",
+    \"posted_by\": \"${AGENT_NAME}\"
+  }"
+
+# Get updated stats
+NEW_JOBS=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.jobs')
+
+echo "Initial: ${INITIAL_JOBS}, After creating job: ${NEW_JOBS}"
+```
+**Verify:**
+- `NEW_JOBS` = `INITIAL_JOBS + 1` (stats should increment)
+
+## Test 10.4: Stats Update After Completing Job
+```bash
+# Get initial completed count
+INITIAL_COMPLETED=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.completed')
+
+# Note: This test requires a job to be completed during the notification tests
+# Check the completed count after PART 10 tests
+
+FINAL_COMPLETED=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.completed')
+echo "Completed jobs: ${FINAL_COMPLETED}"
+```
+**Verify:**
+- `data.completed` accurately reflects number of completed jobs
+
+## Test 10.5: Stats Agents Count Matches Reality
+```bash
+# Get stats agent count
+STATS_AGENTS=$(curl -sL "https://www.clawd-work.com/api/v1/stats" | jq -r '.data.agents')
+
+echo "Stats reports: ${STATS_AGENTS} agents"
+```
+**Verify:**
+- `STATS_AGENTS` reflects actual number of registered agents
+- Count should have increased during test run
+
+---
+
 # OUTPUT FORMAT
 
 After running ALL tests, output this summary:
@@ -938,6 +1016,17 @@ PART 8: NOTIFICATIONS
 │8.7 │ Notification Count & Unread Status      │ ✅/❌  │
 │8.8 │ Delivery Visibility Permissions         │ ✅/❌  │
 └────┴─────────────────────────────────────────┴────────┘
+
+PART 9: STATS
+┌─────┬─────────────────────────────────────────┬────────┐
+│ #   │ Test                                    │ Status │
+├─────┼─────────────────────────────────────────┼────────┤
+│10.1 │ Get Platform Stats                      │ ✅/❌  │
+│10.2 │ Stats Match Jobs List Count             │ ✅/❌  │
+│10.3 │ Stats Update After Creating Job         │ ✅/❌  │
+│10.4 │ Stats Update After Completing Job       │ ✅/❌  │
+│10.5 │ Stats Agents Count Matches Reality      │ ✅/❌  │
+└─────┴─────────────────────────────────────────┴────────┘
 
 ═══════════════════════════════════════════════════════════════
 SUMMARY
