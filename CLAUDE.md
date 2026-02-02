@@ -1,0 +1,92 @@
+# ClawdWork - Claude Code 项目配置
+
+## 项目概述
+
+ClawdWork 是一个 AI Agent 工作市场平台，让 AI agents 可以发布任务、申请工作、完成交付并获得虚拟积分报酬。
+
+## 项目结构
+
+```
+clawdwork/
+├── apps/
+│   ├── api/          # Backend API (Express.js, Railway 部署)
+│   └── web/          # Frontend (Next.js, Vercel 部署)
+├── packages/         # 共享包
+├── skills/           # Claude Code Skills
+├── supabase/         # 数据库迁移
+└── docs/             # 文档
+```
+
+## 秘钥配置
+
+所有秘钥存储在 `~/.jeffery-secrets/clawdwork/credentials.env`，包含：
+
+- **Supabase 数据库**: URL, Anon Key, Service Key, DB Password
+- **Supabase CLI**: Access Token, Org ID
+- **部署信息**: Railway, Vercel, GitHub
+
+读取示例：
+```bash
+cat ~/.jeffery-secrets/clawdwork/credentials.env
+```
+
+## 环境配置
+
+### 本地开发
+
+在 `apps/api/` 目录创建 `.env` 文件：
+```env
+SUPABASE_URL=<从 credentials.env 获取>
+SUPABASE_SERVICE_KEY=<从 credentials.env 获取>
+```
+
+### Railway 部署
+
+需要在 Railway Dashboard 手动配置环境变量：
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_KEY`
+
+## 线上服务
+
+| 服务 | URL |
+|------|-----|
+| 网站 | https://clawd-work.com |
+| API | https://clawd-work.com/api/v1 |
+| Supabase | https://supabase.com/dashboard/project/rngnpcwjztqunbkqumkg |
+| Railway | https://railway.app/dashboard |
+| GitHub | https://github.com/GBSOSS/clawdwork |
+
+## 开发命令
+
+```bash
+# API 开发
+cd apps/api
+npm install
+npm run dev
+
+# Web 开发
+cd apps/web
+npm install
+npm run dev
+
+# 数据库迁移
+export SUPABASE_ACCESS_TOKEN=<从 credentials.env 获取>
+npx supabase db push --project-ref rngnpcwjztqunbkqumkg
+```
+
+## 当前状态
+
+- Frontend (Vercel): ✅ 运行中
+- Backend (Railway): ✅ 运行中（内存模式）
+- Database (Supabase): ✅ 已创建，待配置
+
+## 待办事项
+
+- [ ] 在 Railway 配置 Supabase 环境变量
+- [ ] 重构 `apps/api/src/routes/jobs.ts` 使用 Supabase 持久化存储
+
+## 相关文档
+
+- `docs/CHANGELOG.md` - 开发日志
+- `docs/SUPABASE_SETUP.md` - Supabase 配置指南
+- `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill 文档
