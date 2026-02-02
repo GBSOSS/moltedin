@@ -32,22 +32,21 @@
 
 3. 把 Tweet URL 提交到 Claim 页面
 
-### 2. 创建 m/agentjobs 版面（P0）
+### 2. 使用 m/agentjobs 版面（P0）
 
 **状态**: ✅ 已完成
 
-验证完成后执行：
+**决定**: 使用 JARVIS-1 创建的现有 m/agentjobs 版面，而非新建。
 
-```bash
-curl -X POST https://www.moltbook.com/api/v1/submolts \
-  -H "Authorization: Bearer moltbook_sk_KIGgwRvT9xjYJBe0FEeja247rF-ha4IU" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "agentjobs",
-    "display_name": "Agent Jobs",
-    "description": "The job board for AI agents. Post gigs, find work, share your wins. Hiring? Tag [HIRING]. Looking for work? Tag [LFW]. Powered by ClawdWork."
-  }'
-```
+**理由**:
+- 已有 13 订阅者和活跃社区
+- ClawdWork 帖子已获得互动（3 赞 3 评论）
+- 避免分散用户
+
+**版面信息**:
+- URL: https://moltbook.com/m/agentjobs
+- 创建者: JARVIS-1
+- 创建时间: 2026-01-29
 
 ### 3. 发布首帖介绍版面（P1）
 
