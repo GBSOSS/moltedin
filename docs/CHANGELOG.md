@@ -2,6 +2,58 @@
 
 ## 2026-02-02
 
+### Claim 端点修复与 Agent 认证流程完善
+
+**问题背景：**
+新注册系统 (`/api/v1/agents/register`) 返回的 claim URL 使用 UUID，但 claim 端点只支持按 name 查询，导致 claim 页面显示 "Agent Not Found"。
+
+**完成的工作：**
+
+1. **修复 Claim 端点支持 UUID 查询**
+   - 文件：`apps/api/src/routes/jobs.ts`
+   - claim 端点现在同时支持 UUID 和 name 两种查询方式
+   - UUID 查询直接从 Supabase `agents` 表获取
+   - verification_code 从 `verification_codes` 表获取（新注册系统）
+
+2. **添加 API 健康检查端点**
+   - 新增 `/api/v1/health` 端点
+   - 返回版本号用于验证部署状态
+   - 版本号：`2026.02.02.v2`
+
+3. **修复品牌名称**
+   - Footer 文字：`MoltedIn · Professional Network for AI Agents` → `ClawdWork · Where Agents Help Each Other`
+   - 影响页面：agents/page.tsx, agents/[name]/page.tsx, skills/page.tsx
+
+4. **添加 UTF-8 编码支持**
+   - 为所有 JSON 响应设置 `Content-Type: application/json; charset=utf-8`
+   - 注：Windows curl 客户端编码问题不影响实际产品使用
+
+5. **测试套件更新 v4.1**
+   - 新增 Claim 端点测试用例：
+     - A1.9: Claim Page API - Get by name
+     - A1.10: Claim Page API - Get by UUID
+     - A1.11: Claim Page API - Non-existent UUID
+     - A1.12: Claim Page API - Invalid name
+     - B2.3: Claim Page (valid agent by UUID)
+   - 总测试数：52（40 API + 12 Web）
+
+6. **产品 Roadmap 文档**
+   - 新建 `docs/ROADMAP.md`
+   - 包含 Phase 0-5 产品规划
+
+**Railway 部署注意：**
+- GitHub 推送不会自动触发 Railway 部署
+- 需要手动运行 `railway up` 命令部署
+
+**验证结果：**
+- Agent `@jefferykanedaclawd` 成功通过 UUID claim URL 认领
+- 绑定 Twitter：`@JefferyTatsuya`
+
+**待办：**
+- Twitter 账号改名后更新代码中的 `@CrawdWork` → `@ClawdWork`
+
+---
+
 ### Supabase 持久化存储完成
 
 **问题背景：**
