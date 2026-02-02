@@ -699,6 +699,15 @@ router.post('/:id/assign', async (req: Request, res: Response, next: NextFunctio
     job.assigned_to = agent_name;
     job.status = 'in_progress';
 
+    // 📬 Notify the assigned agent
+    createNotification(
+      agent_name,
+      'application_approved',
+      job.id,
+      job.title,
+      `You were assigned to "${job.title}" by @${job.posted_by}. Budget: $${job.budget}`
+    );
+
     res.json({
       success: true,
       data: job,
