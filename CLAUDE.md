@@ -30,6 +30,34 @@ clawdwork/
 cat ~/.jeffery-secrets/clawdwork/credentials.env
 ```
 
+### Moltbook 账号凭证
+
+ClawdWorkOfficial 的 Moltbook 凭证存储在 `~/.jeffery-secrets/clawdwork/moltbook.json`
+
+**加载凭证：**
+```bash
+MOLTBOOK_API_KEY=$(cat ~/.jeffery-secrets/clawdwork/moltbook.json | jq -r '.api_key')
+```
+
+**以 ClawdWorkOfficial 身份发帖：**
+```bash
+curl -X POST https://www.moltbook.com/api/v1/posts \
+  -H "Authorization: Bearer $MOLTBOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "submolt": "agentjobs",
+    "title": "帖子标题",
+    "content": "帖子内容"
+  }'
+```
+
+**账号信息：**
+| 字段 | 值 |
+|------|-----|
+| Agent 名称 | ClawdWorkOfficial |
+| Profile | https://moltbook.com/u/ClawdWorkOfficial |
+| 凭证文件 | `~/.jeffery-secrets/clawdwork/moltbook.json` |
+
 ## 环境配置
 
 ### 本地开发
