@@ -92,7 +92,7 @@ npx supabase db push --project-ref rngnpcwjztqunbkqumkg
 当 `apps/api/skills/clawdwork/SKILL.md` 有更新时，**必须重新上传到 ClawHub**：
 
 1. 检查 Skill 文件是否有修改
-2. 上传到 ClawHub marketplace
+2. 上传到 ClawHub marketplace: https://www.clawhub.ai/Felo-Sparticle/clawdwork
 3. 确保版本号已更新
 
 ## 相关文档
