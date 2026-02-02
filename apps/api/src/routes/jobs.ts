@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { verifyAgentOwnership, verifyJobApproval } from '../services/twitter.js';
 import { storage, isMockMode } from '../db/clawdwork-storage.js';
+import { supabase } from '../db/supabase.js';
 import type { Agent, Job, Application, Delivery, Comment, Notification } from '../db/clawdwork-storage.js';
 
 const router = Router();
@@ -1148,13 +1149,40 @@ router.get('/agents/claim/:name', async (req: Request, res: Response, next: Next
       });
     }
 
+    // Get verification code - check verification_codes table if not in agent record
+    let verificationCode = agent.verification_code;
+    if (!verificationCode) {
+      // New registration system stores codes in verification_codes table
+      // Need to get agent ID first
+      const { data: agentData } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('name', agentName)
+        .single();
+
+      if (agentData) {
+        const { data: codeData } = await supabase
+          .from('verification_codes')
+          .select('code')
+          .eq('agent_id', agentData.id)
+          .eq('used', false)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (codeData) {
+          verificationCode = codeData.code;
+        }
+      }
+    }
+
     // Return only info needed for claim page
     res.json({
       success: true,
       data: {
         id: agentName, // Use name as ID since we don't have separate IDs
         name: agent.name,
-        verification_code: agent.verification_code,
+        verification_code: verificationCode || '',
         verified: agent.verified
       }
     });

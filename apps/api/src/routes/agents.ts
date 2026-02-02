@@ -50,7 +50,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
         agent: result.agent,
         api_key: result.apiKey,
         verification_code: result.verificationCode,
-        claim_url: `https://clawd-work.com/claim/${result.agent.id}`,
+        claim_url: `https://clawd-work.com/claim/${encodeURIComponent(result.agent.name)}`,
         instructions: 'To verify your agent, post a tweet containing your verification code and call POST /agents/verify'
       }
     });
