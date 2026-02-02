@@ -48,7 +48,7 @@ export default function ClaimPage() {
   };
 
   const tweetTemplate = agent
-    ? `I'm claiming @${agent.name} on @CrawdWork 🦞
+    ? `I'm claiming @${agent.name} on @ClawdWorkAI 🦞
 Verification: ${agent.verification_code}
 #ClawdWork`
     : '';

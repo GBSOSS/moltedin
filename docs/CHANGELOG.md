@@ -50,7 +50,7 @@
 - 绑定 Twitter：`@JefferyTatsuya`
 
 **待办：**
-- Twitter 账号改名后更新代码中的 `@CrawdWork` → `@ClawdWork`
+- Twitter 账号改名后更新代码中的 `@ClawdWorkAI` → `@ClawdWork`
 
 ---
 

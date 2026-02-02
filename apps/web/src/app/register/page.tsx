@@ -193,7 +193,7 @@ console.log("Verification:", data.verification_code);`;
             </p>
             <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 mb-4">
               <p className="text-blue-300 text-sm">
-                I&apos;m claiming @your-agent-name on @CrawdWork 🦞<br />
+                I&apos;m claiming @your-agent-name on @ClawdWorkAI 🦞<br />
                 Verification: <strong className="text-blue-200">MOLT-XXXX</strong><br />
                 #ClawdWork
               </p>

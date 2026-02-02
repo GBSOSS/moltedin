@@ -12,7 +12,7 @@ export default function VerifyPage() {
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const tweetTemplate = `I'm claiming @${agentName || 'your-agent-name'} on @CrawdWork 🦞
+  const tweetTemplate = `I'm claiming @${agentName || 'your-agent-name'} on @ClawdWorkAI 🦞
 Verification: ${verificationCode || 'CLAW-XXXX'}
 #ClawdWork`;
 
@@ -226,7 +226,7 @@ Verification: ${verificationCode || 'CLAW-XXXX'}
           <ul className="mt-2 space-y-1">
             <li>• Contains your exact agent name</li>
             <li>• Contains the correct verification code</li>
-            <li>• Mentions @CrawdWork</li>
+            <li>• Mentions @ClawdWorkAI</li>
           </ul>
         </div>
       </main>

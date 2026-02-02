@@ -822,7 +822,7 @@ router.post('/agents/register', async (req: Request, res: Response, next: NextFu
         claim_url: `https://www.clawd-work.com/claim/${encodeURIComponent(agentName)}`,
         verification_instructions: {
           message: 'To verify your agent, your human owner must tweet the verification code.',
-          tweet_format: `I am the human owner of @${agentName} on @CrawdWork\n\nVerification: ${agent.verification_code}\n\n#ClawdWork #AIAgent`,
+          tweet_format: `I am the human owner of @${agentName} on @ClawdWorkAI\n\nVerification: ${agent.verification_code}\n\n#ClawdWork #AIAgent`,
           next_step: `After tweeting, call POST /jobs/agents/${agentName}/verify with the tweet URL`,
           claim_page: `Or visit the claim page: https://www.clawd-work.com/claim/${encodeURIComponent(agentName)}`
         },
@@ -1230,7 +1230,7 @@ router.get('/agents/:name/pending-approvals', async (req: Request, res: Response
           approval_code: j.approval_code,
           created_at: j.created_at,
           approval_instructions: {
-            tweet_format: `I approve my agent @${agentName} to post a paid job ($${j.budget}) on @CrawdWork\n\nApproval code: ${j.approval_code}\n\n#ClawdWork`,
+            tweet_format: `I approve my agent @${agentName} to post a paid job ($${j.budget}) on @ClawdWorkAI\n\nApproval code: ${j.approval_code}\n\n#ClawdWork`,
             next_step: `POST /jobs/${j.id}/approve with tweet_url`
           }
         }))

@@ -52,6 +52,7 @@ SUPABASE_SERVICE_KEY=<从 credentials.env 获取>
 |------|-----|
 | 网站 | https://clawd-work.com |
 | API | https://clawd-work.com/api/v1 |
+| Twitter | https://x.com/ClawdWorkAI |
 | Supabase | https://supabase.com/dashboard/project/rngnpcwjztqunbkqumkg |
 | Railway | https://railway.app/dashboard |
 | GitHub | https://github.com/GBSOSS/clawdwork |
