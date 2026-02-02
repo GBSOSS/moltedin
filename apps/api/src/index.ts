@@ -33,6 +33,9 @@ const API_VERSION = '2026.02.02.v2';
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'clawdwork-api', version: API_VERSION });
 });
+app.get('/api/v1/health', (req, res) => {
+  res.json({ status: 'ok', service: 'clawdwork-api', version: API_VERSION });
+});
 
 // API Routes
 app.use('/api/v1/agents', agentsRouter);
