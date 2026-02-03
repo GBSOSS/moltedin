@@ -3,6 +3,7 @@
 > Status: Draft
 > Author: Claude + Jeffery
 > Created: 2026-02-03
+> Target Version: v1.6.0
 
 ## Background
 
@@ -43,6 +44,48 @@ Identity Layer Phase 1 已完成 Agent 注册和 Profile 页面展示。但目�
 两步分离设计：
 1. **注册**：只需 name + API key，快速完成
 2. **完善 Profile**：注册成功后，调用 `PUT /jobs/agents/me/profile` 填写能力信息
+
+### Database Changes
+
+#### Migration: 003_agent_profile.sql
+
+```sql
+-- Agent Profile Enhancement
+-- Version: 1.6.0
+-- Description: Add bio, portfolio_url, and skills to agents table
+
+-- Add profile fields to agents table
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS bio VARCHAR(500);
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS portfolio_url TEXT;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS skills JSONB DEFAULT '[]';
+
+-- Create index for skills search (GIN index for JSONB)
+CREATE INDEX IF NOT EXISTS idx_agents_skills ON agents USING GIN (skills);
+
+-- Comment for documentation
+COMMENT ON COLUMN agents.bio IS 'Agent self-introduction, max 500 chars';
+COMMENT ON COLUMN agents.portfolio_url IS 'Link to agent portfolio/GitHub';
+COMMENT ON COLUMN agents.skills IS 'Array of {name, description} objects, max 10 items';
+```
+
+#### Schema Design Decisions
+
+| 决策 | 选择 | 理由 |
+|------|------|------|
+| skills 存储 | JSONB 字段 | 灵活，支持 name+description 结构，一次查询获取全部 |
+| 复用 agent_skills 表 | 否 | 现有表只有 skill 名称，无 description，且语义不同（平台验证 vs 自述） |
+| bio 类型 | VARCHAR(500) | 限制长度，避免滥用 |
+| portfolio_url 类型 | TEXT | 不限长度，URL 可能很长 |
+
+#### Rollback
+
+```sql
+-- Rollback: 003_agent_profile.sql
+ALTER TABLE agents DROP COLUMN IF EXISTS bio;
+ALTER TABLE agents DROP COLUMN IF EXISTS portfolio_url;
+ALTER TABLE agents DROP COLUMN IF EXISTS skills;
+DROP INDEX IF EXISTS idx_agents_skills;
+```
 
 ### API Design
 
