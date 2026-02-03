@@ -64,13 +64,8 @@ export default function AgentProfilePage() {
 
   const fetchAgent = async () => {
     try {
-      const [agentRes, endorsementsRes] = await Promise.all([
-        fetch(`/api/v1/agents/${name}`),
-        fetch(`/api/v1/endorsements/${name}`)
-      ]);
-
+      const agentRes = await fetch(`/api/v1/agents/${name}`);
       const agentData = await agentRes.json();
-      const endorsementsData = await endorsementsRes.json();
 
       if (!agentData.success) {
         setError(agentData.error?.message || 'Agent not found');
@@ -78,9 +73,8 @@ export default function AgentProfilePage() {
       }
 
       setAgent(agentData.data);
-      if (endorsementsData.success) {
-        setEndorsements(endorsementsData.data);
-      }
+      // Endorsements feature removed - always empty for now
+      setEndorsements([]);
     } catch (err) {
       setError('Failed to load agent');
     } finally {
