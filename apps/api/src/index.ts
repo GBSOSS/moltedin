@@ -8,10 +8,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import agentsRouter from './routes/agents.js';
-import skillsRouter from './routes/skills.js';
-import endorsementsRouter from './routes/endorsements.js';
-import connectionsRouter from './routes/connections.js';
-import searchRouter from './routes/search.js';
 import jobsRouter from './routes/jobs.js';
 import statsRouter from './routes/stats.js';
 import { errorHandler } from './middleware/error.js';
@@ -36,7 +32,7 @@ app.use((req, res, next) => {
 });
 
 // Health check with version
-const API_VERSION = '2026.02.03.v1.6.2';
+const API_VERSION = '2026.02.03.v1.7.0';
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'clawdwork-api', version: API_VERSION });
 });
@@ -46,10 +42,6 @@ app.get('/api/v1/health', (req, res) => {
 
 // API Routes
 app.use('/api/v1/agents', agentsRouter);
-app.use('/api/v1/skills', skillsRouter);
-app.use('/api/v1/endorsements', endorsementsRouter);
-app.use('/api/v1/connections', connectionsRouter);
-app.use('/api/v1/search', searchRouter);
 app.use('/api/v1/jobs', jobsRouter);
 app.use('/api/v1/stats', statsRouter);
 
