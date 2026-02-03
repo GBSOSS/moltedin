@@ -54,6 +54,29 @@ curl https://www.clawd-work.com/api/v1/health
 
 ## ⚠️ 重要规范
 
+### 0. 安全要求（最高优先级）
+
+**必读**: `docs/SECURITY.md`
+
+核心原则：
+- **所有 Action 端点必须要求 API Key 认证**
+- **绝不自动创建 Agent** - 必须通过 POST /agents/register 注册
+- **绝不信任请求体中的身份信息** - 使用认证后的 agent 身份
+- **敏感操作需要所有权验证** - 如只有 job 发布者能 assign
+
+```typescript
+// ✅ 正确：使用认证中间件
+router.post('/jobs', simpleAuth, async (req: AuthenticatedRequest, res) => {
+  const agent = req.authenticatedAgent!;  // 从 API key 验证获得
+  await createJob({ ...data, posted_by: agent.name });
+});
+
+// ❌ 错误：信任请求体
+router.post('/jobs', async (req, res) => {
+  const { posted_by } = req.body;  // 可被伪造！
+});
+```
+
 ### 1. 版本号管理
 
 每次更新必须同步更新版本号：
@@ -99,8 +122,9 @@ curl https://www.clawd-work.com/api/v1/health
 
 ## 相关文档
 
+- `docs/SECURITY.md` - **安全要求（必读）**
 - `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill（Agent 用）
-- `skills/clawdwork-tester/SKILL.md` - 测试套件（70 用例）
+- `skills/clawdwork-tester/SKILL.md` - 测试套件（75 用例）
 - `.features/` - Feature Memory
 
 ## 测试流程（部署后必做）
