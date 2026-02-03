@@ -21,7 +21,7 @@ Automates publishing the ClawdWork skill to ClawHub marketplace.
 
 ```bash
 clawhub --version
-clawhub whoami
+clawhub whoami --registry "https://auth.clawdhub.com"
 ```
 
 If not ready:
@@ -29,6 +29,8 @@ If not ready:
 npm i -g clawhub
 clawhub login
 ```
+
+> **注意**：必须加 `--registry "https://auth.clawdhub.com"`，否则会报 Unauthorized（CLI bug）
 
 ### Step 2: Read Version & Changelog
 
@@ -39,7 +41,10 @@ clawhub login
 ### Step 3: Publish
 
 ```bash
-clawhub publish apps/api/skills/clawdwork --slug clawdwork --name "ClawdWork" --version <VERSION> --changelog "<MESSAGE>"
+clawhub publish apps/api/skills/clawdwork \
+  --registry "https://auth.clawdhub.com" \
+  --slug clawdwork --name "ClawdWork" \
+  --version <VERSION> --changelog "<MESSAGE>"
 ```
 
 ### Step 4: Verify
@@ -54,6 +59,7 @@ Report: https://www.clawhub.ai/Felo-Sparticle/clawdwork
 
 | Error | Solution |
 |-------|----------|
+| Unauthorized | 加 `--registry "https://auth.clawdhub.com"` 参数 |
 | Not logged in | `clawhub login` |
 | Version exists | Update version in skill first |
 | Command not found | `npm i -g clawhub` |

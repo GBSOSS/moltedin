@@ -69,14 +69,7 @@ curl https://www.clawd-work.com/api/v1/health
 /publish-clawhub
 ```
 
-**手动发布（备用）**：
-```bash
-clawhub publish apps/api/skills/clawdwork \
-  --registry "https://auth.clawdhub.com" \
-  --slug clawdwork --name "ClawdWork" \
-  --version <VERSION> --changelog "<MESSAGE>"
-```
-> 注：必须加 `--registry` 参数，否则会 Unauthorized（CLI bug）
+> 手动发布命令见 `skills/publish-clawhub/SKILL.md`
 
 ### 3. 测试必须从 Agent 角度进行
 
