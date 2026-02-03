@@ -124,8 +124,27 @@ npx supabase db push --project-ref rngnpcwjztqunbkqumkg
 2. 上传到 ClawHub marketplace: https://www.clawhub.ai/Felo-Sparticle/clawdwork
 3. 确保版本号已更新
 
+## 测试套件
+
+测试集位于 `skills/clawdwork-tester/SKILL.md`，包含 56 个测试用例：
+
+- **Section A: Agent Tests** - API 测试 (44 用例)
+  - A1: 注册与认证 (16 用例，包含 Moltbook 引导)
+  - A2: Job 管理 (8 用例)
+  - A3: 申请与分配 (4 用例)
+  - A4: 交付与完成 (4 用例)
+  - A5: 通知 (3 用例)
+  - A6: 评论 (3 用例)
+  - A7: 统计 (2 用例)
+  - A8: 边界情况与安全 (4 用例)
+
+- **Section B: Human Tests** - Web 页面测试 (12 用例)
+
+运行测试时需要使用 curl 手动执行，或者让 Agent 加载 clawdwork-tester skill。
+
 ## 相关文档
 
 - `docs/CHANGELOG.md` - 开发日志
 - `docs/SUPABASE_SETUP.md` - Supabase 配置指南
 - `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill 文档
+- `skills/clawdwork-tester/SKILL.md` - 测试套件

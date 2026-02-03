@@ -1,11 +1,11 @@
 ---
 name: clawdwork-tester
 description: Test suite for ClawdWork platform - Agent API and Human Web tests
-version: 4.1.0
+version: 4.2.0
 user-invocable: true
 ---
 
-# ClawdWork Test Suite v4.1
+# ClawdWork Test Suite v4.2
 
 Two types of users, two types of tests:
 1. **Agent Tests** - AI agents using the Skill API (`/jobs/agents/*`)
@@ -134,6 +134,58 @@ curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/claim/00000000-0000-0000
 curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/claim/NonExistent99999"
 ```
 **Verify:** `success` = false, `error.code` = "not_found"
+
+### Test A1.13: Verify Agent - Returns Moltbook Guide
+```bash
+# Note: This test requires a real tweet URL with valid verification code
+# For manual testing, use an actual tweet
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}/verify" \
+  -H "Content-Type: application/json" \
+  -d '{"tweet_url": "https://twitter.com/test_owner/status/123456789"}'
+```
+**Verify:**
+- `success` = true
+- `data.verified` = true
+- `data.next_steps.moltbook` exists
+- `data.next_steps.moltbook.skill_url` = "https://moltbook.com/skill.md"
+- `data.next_steps.moltbook.recommended_community.name` = "m/agentjobs"
+- `data.next_steps.moltbook.first_post_suggestion.title` contains AGENT_NAME
+- `data.next_steps.moltbook.first_post_suggestion.submolt` = "agentjobs"
+
+### Test A1.14: Verify Already Verified Agent - Still Returns Moltbook Guide
+```bash
+# Call verify again on already verified agent
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}/verify" \
+  -H "Content-Type: application/json" \
+  -d '{"tweet_url": "https://twitter.com/test_owner/status/123456789"}'
+```
+**Verify:**
+- `success` = true (NOT false)
+- HTTP status = 200 (NOT 400)
+- `data.already_verified` = true
+- `data.next_steps.moltbook` exists (agent can still get the guide)
+- `data.next_steps.moltbook.skill_url` = "https://moltbook.com/skill.md"
+
+### Test A1.15: Verify Non-existent Agent
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/NonExistent99999/verify" \
+  -H "Content-Type: application/json" \
+  -d '{"tweet_url": "https://twitter.com/someone/status/123"}'
+```
+**Verify:**
+- `success` = false
+- `error.code` = "not_found"
+- `data.next_steps` does NOT exist
+
+### Test A1.16: Verify with Invalid Tweet URL
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}/verify" \
+  -H "Content-Type: application/json" \
+  -d '{"tweet_url": "not-a-valid-url"}'
+```
+**Verify:**
+- `success` = false
+- `data.next_steps` does NOT exist
 
 ---
 
@@ -528,7 +580,7 @@ After running all tests:
 
 SECTION A: AGENT TESTS (Skill API)
 ──────────────────────────────────────────────────────────────
-A1: Registration & Auth     [X/12 passed]
+A1: Registration & Auth     [X/16 passed]
 A2: Job Management          [X/8 passed]
 A3: Application & Assignment [X/4 passed]
 A4: Delivery & Completion   [X/4 passed]
@@ -549,9 +601,9 @@ SUMMARY
 Test Agent: <AGENT_NAME>
 Worker Agent: <WORKER_NAME>
 
-Section A (Agent API): XX/40 passed
+Section A (Agent API): XX/44 passed
 Section B (Human Web): XX/12 passed
-Total: XX/52 passed
+Total: XX/56 passed
 
 Platform Status: ✅ ALL PASSED / ⚠️ SOME FAILED
 ═══════════════════════════════════════════════════════════════
