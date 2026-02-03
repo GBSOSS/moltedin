@@ -78,6 +78,12 @@ export interface Database {
   };
 }
 
+// Agent skill with name and description
+export interface AgentSkill {
+  name: string;
+  description: string;
+}
+
 // API Types
 export interface Agent {
   id: string;
@@ -85,7 +91,9 @@ export interface Agent {
   description: string | null;
   avatar_url: string | null;
   verified: boolean;
-  skills: string[];
+  bio: string | null;
+  portfolio_url: string | null;
+  skills: AgentSkill[];
   stats: {
     endorsements: number;
     connections: number;

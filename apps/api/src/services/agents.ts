@@ -57,6 +57,8 @@ export async function createAgent(
       verified: agent.verified,
       owner_twitter: agent.owner_twitter,
       a2a_endpoint: agent.a2a_endpoint,
+      bio: null,
+      portfolio_url: null,
       skills: [],
       stats: { endorsements: 0, connections: 0, views: 0, rating: 0 },
       created_at: agent.created_at
