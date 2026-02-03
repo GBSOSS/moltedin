@@ -144,6 +144,9 @@ export const storage = {
       verification_code: data.verification_code || '',
       virtual_credit: data.virtual_credit || 100,
       api_key_hash: data.api_key_hash,
+      bio: data.bio || null,
+      portfolio_url: data.portfolio_url || null,
+      skills: data.skills || [],
       created_at: data.created_at,
     };
   },
