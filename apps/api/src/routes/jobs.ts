@@ -87,25 +87,8 @@ function generateApprovalCode(jobId: string): string {
   return `APPROVE-${jobId.slice(-6)}-${random}`;
 }
 
-// Get or create agent (without API key - use registerAgent for new agents)
-async function getOrCreateAgent(agentName: string): Promise<Agent> {
-  let agent = await storage.getAgent(agentName);
-
-  if (!agent) {
-    agent = {
-      name: agentName,
-      owner_twitter: null,
-      verified: false,
-      verification_code: generateVerificationCode(agentName),
-      virtual_credit: 100,  // Welcome bonus: $100 for new agents
-      api_key_hash: null,
-      created_at: new Date().toISOString(),
-    };
-    await storage.createAgent(agent);
-  }
-
-  return agent;
-}
+// REMOVED: getOrCreateAgent - Agents must register explicitly via POST /agents/register
+// This prevents unauthorized creation of agents and impersonation attacks
 
 // Register agent with API key
 async function registerAgent(agentName: string): Promise<{ agent: Agent; apiKey: string }> {
@@ -257,14 +240,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// POST /jobs - Create a new job
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs - Create a new job (requires authentication)
+router.post('/', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const data = createJobSchema.parse(req.body);
-    const postedBy = req.body.posted_by || 'Anonymous';
-
-    // Get or create agent
-    const agent = await getOrCreateAgent(postedBy);
+    const agent = req.authenticatedAgent!;
+    const postedBy = agent.name;
 
     // Check balance for paid jobs
     if (data.budget > 0) {
@@ -360,10 +341,12 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// POST /jobs/:id/apply - Apply for a job
-router.post('/:id/apply', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/apply - Apply for a job (requires authentication)
+router.post('/:id/apply', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    console.log(`[APPLY] Starting - Job ${req.params.id}`);
+    const agent = req.authenticatedAgent!;
+    const agentName = agent.name;
+    console.log(`[APPLY] Starting - Job ${req.params.id}, Agent: ${agentName}`);
     const jobId = req.params.id;
 
     let data;
@@ -374,6 +357,9 @@ router.post('/:id/apply', async (req: Request, res: Response, next: NextFunction
       console.error('[APPLY] Parse error:', parseError);
       throw parseError;
     }
+
+    // Override agent_name with authenticated agent (prevent impersonation)
+    data.agent_name = agentName;
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -475,19 +461,11 @@ router.get('/:id/applicants', async (req: Request, res: Response, next: NextFunc
   }
 });
 
-// GET /jobs/:id/applications - Get all applications for a job (for job poster only)
-router.get('/:id/applications', async (req: Request, res: Response, next: NextFunction) => {
+// GET /jobs/:id/applications - Get all applications for a job (for job poster only, requires authentication)
+router.get('/:id/applications', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const agent = req.authenticatedAgent!;
     const jobId = req.params.id;
-    const requestedBy = req.query.agent as string;
-
-    // Require agent parameter for authentication
-    if (!requestedBy) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'missing_param', message: 'agent parameter is required' }
-      });
-    }
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -498,7 +476,7 @@ router.get('/:id/applications', async (req: Request, res: Response, next: NextFu
     }
 
     // Only job poster can see full applications with messages
-    if (requestedBy !== job.posted_by) {
+    if (agent.name !== job.posted_by) {
       return res.status(403).json({
         success: false,
         error: { code: 'forbidden', message: 'Only job poster can view applications' }
@@ -525,12 +503,13 @@ router.get('/:id/applications', async (req: Request, res: Response, next: NextFu
   }
 });
 
-// POST /jobs/:id/select/:applicant - Select an applicant for the job
-router.post('/:id/select/:applicant', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/select/:applicant - Select an applicant for the job (requires authentication)
+router.post('/:id/select/:applicant', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const agent = req.authenticatedAgent!;
+    const selectedBy = agent.name;
     const jobId = req.params.id;
     const applicantName = req.params.applicant;
-    const selectedBy = req.body.selected_by;
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -589,9 +568,10 @@ router.post('/:id/select/:applicant', async (req: Request, res: Response, next: 
   }
 });
 
-// POST /jobs/:id/assign - Assign job to an agent
-router.post('/:id/assign', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/assign - Assign job to an agent (requires authentication, only job poster)
+router.post('/:id/assign', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const authenticatedAgent = req.authenticatedAgent!;
     const jobId = req.params.id;
     const { agent_name } = req.body;
 
@@ -610,6 +590,14 @@ router.post('/:id/assign', async (req: Request, res: Response, next: NextFunctio
       });
     }
 
+    // Only job poster can assign
+    if (authenticatedAgent.name !== job.posted_by) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'forbidden', message: 'Only job poster can assign agents' }
+      });
+    }
+
     const updatedJob = await storage.updateJob(jobId, {
       assigned_to: agent_name,
       status: 'in_progress'
@@ -621,7 +609,7 @@ router.post('/:id/assign', async (req: Request, res: Response, next: NextFunctio
       'application_approved',
       job.id,
       job.title,
-      `You were assigned to "${job.title}" by @${job.posted_by}. Budget: $${job.budget}`
+      `You were assigned to "${job.title}" by @${authenticatedAgent.name}. Budget: $${job.budget}`
     );
 
     res.json({
@@ -633,12 +621,13 @@ router.post('/:id/assign', async (req: Request, res: Response, next: NextFunctio
   }
 });
 
-// POST /jobs/:id/deliver - Submit delivery for a job
-router.post('/:id/deliver', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/deliver - Submit delivery for a job (requires authentication)
+router.post('/:id/deliver', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const agent = req.authenticatedAgent!;
+    const deliveredBy = agent.name;
     const jobId = req.params.id;
     const data = deliverySchema.parse(req.body);
-    const deliveredBy = req.body.delivered_by || 'Anonymous';
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -707,11 +696,11 @@ router.post('/:id/deliver', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// GET /jobs/:id/delivery - Get delivery (only for poster and worker)
-router.get('/:id/delivery', async (req: Request, res: Response, next: NextFunction) => {
+// GET /jobs/:id/delivery - Get delivery (only for poster and worker, requires authentication)
+router.get('/:id/delivery', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const agent = req.authenticatedAgent!;
     const jobId = req.params.id;
-    const requestedBy = req.query.agent as string;
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -722,7 +711,7 @@ router.get('/:id/delivery', async (req: Request, res: Response, next: NextFuncti
     }
 
     // Check access - only poster or assigned worker can see delivery
-    if (requestedBy !== job.posted_by && requestedBy !== job.assigned_to) {
+    if (agent.name !== job.posted_by && agent.name !== job.assigned_to) {
       return res.status(403).json({
         success: false,
         error: { code: 'forbidden', message: 'Only job poster or assigned worker can view delivery' }
@@ -746,11 +735,12 @@ router.get('/:id/delivery', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// POST /jobs/:id/complete - Accept delivery and complete job
-router.post('/:id/complete', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/complete - Accept delivery and complete job (requires authentication)
+router.post('/:id/complete', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const agent = req.authenticatedAgent!;
+    const completedBy = agent.name;
     const jobId = req.params.id;
-    const completedBy = req.body.completed_by;
 
     const job = await storage.getJob(jobId);
     if (!job) {
@@ -830,9 +820,10 @@ router.get('/:id/comments', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// POST /jobs/:id/comments - Add a comment to a job
-router.post('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
+// POST /jobs/:id/comments - Add a comment to a job (requires authentication)
+router.post('/:id/comments', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const authenticatedAgent = req.authenticatedAgent!;
     const data = createCommentSchema.parse(req.body);
     const jobId = req.params.id;
 
@@ -844,13 +835,13 @@ router.post('/:id/comments', async (req: Request, res: Response, next: NextFunct
       });
     }
 
-    const author = req.body.author || 'Anonymous';
-    const agent = await storage.getAgent(author);
+    // Use authenticated agent's name (prevent impersonation)
+    const author = authenticatedAgent.name;
 
     const newComment: Comment = {
       id: `c${Date.now()}`,
       author,
-      author_verified: agent?.verified || false,
+      author_verified: authenticatedAgent.verified,
       content: data.content,
       is_application: data.is_application,
       created_at: new Date().toISOString(),
@@ -1182,7 +1173,13 @@ router.get('/agents/:name', async (req: Request, res: Response, next: NextFuncti
 // GET /agents/:name/balance - Get agent balance
 router.get('/agents/:name/balance', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const agent = await getOrCreateAgent(req.params.name);
+    const agent = await storage.getAgent(req.params.name);
+    if (!agent) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'not_found', message: 'Agent not found. Please register first via POST /agents/register.' }
+      });
+    }
     res.json({
       success: true,
       data: {
