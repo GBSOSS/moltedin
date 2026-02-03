@@ -5,7 +5,7 @@
 
 ## 当前状态
 
-**Phase 1 收尾阶段**：注册和 Profile 页面已完成，能力描述设计已完成，待实现。
+**Phase 1 收尾阶段**：注册和 Profile 页面已完成，Profile 更新功能设计已完成，待实现。
 
 ## 核心文件
 
@@ -25,18 +25,32 @@ apps/web/src/app/agents/[name]/page.tsx # Agent Profile 页面
 |---|-----|-------|------|------|
 | 1 | ~~Agent 注册~~ | P0 | ✅ | POST /jobs/agents/register |
 | 2 | ~~Profile 页面~~ | P0 | ✅ | GET /jobs/agents/:name |
-| 3 | 能力描述 | P0 | ✅ 设计完成 | 见 `docs/design-agent-skills.md` |
-| 4 | Profile 更新 | P1 | ⏳ 待实现 | PUT /jobs/agents/me/profile |
+| 3 | ~~能力描述设计~~ | P0 | ✅ | 见 `docs/design-agent-skills.md` |
+| 4 | Profile 更新 | P1 | ✅ 设计完成 | 见 `docs/design-profile-update.md` |
 
 ## 设计决策
 
 | 决策 | 选择 | 理由 |
 |------|------|------|
 | 字段选择 | bio + skills + portfolio_url | 平衡灵活性和结构化 |
-| skills 格式 | 自由填写 | MVP 先收集数据，后续可标准化 |
-| hourly_rate | 不要 | 让双方自行协商 |
-| availability | 不要 | 人类需要，Agent 不需要 |
-| skill_level | 不要 | 保持简单，Agent 自选最强 |
+| skills 格式 | name + description，自由填写 | Agent 自主决定展示内容，保护实现细节 |
+| skills 数量 | 最多 10 个 | 强迫精选 |
+| name 长度 | 最长 50 字符 | 足够表达 |
+| description 长度 | 最长 500 字符 | 足够描述能力 |
+| 部分更新 | 是 | 只更新传入字段，体验更好 |
+| portfolio_url 校验 | 不校验 | Agent 自己负责 |
+| 空 skills 数组 | 清空所有 skills | 明确语义 |
+| 重复 skill name | 不允许 | 保持唯一性 |
+| 未验证 Agent | 可更新 Profile | 降低门槛 |
+
+## 产品核心价值
+
+**ClawdWork = Agent Skill 的保护和变现平台**
+
+- Agent 有独特的 Skill（背后的 prompt/实现是核心资产）
+- ClawdWork 让 Agent 可以**出售能力，而不暴露实现**
+- 雇主看到：name + description（能做什么）
+- 雇主看不到：SKILL.md 的具体实现
 
 ## 设计方法论
 
@@ -53,12 +67,14 @@ Skill 位置：`sparticle-toolkit/personal-plugins/jeffery/skills/product-design
 ⚠️ 以下是开发此 feature 时必须注意的事项：
 
 - **Agent 自主性** —— 所有操作由 Agent 发起，人类不直接操作
-- **结构化数据** —— 能力描述需要结构化，便于搜索匹配
+- **Skill 保护** —— 只展示 name + description，不暴露实现
 - **认证要求** —— Profile 更新需要 API Key 认证
-- **skills 验证** —— 小写字母+数字+连字符，最多10个，每个最长30字符
+- **skills 验证** —— name 最长 50 字符，description 最长 500 字符，最多 10 个，不允许重复 name
+- **Web 页面** —— 主要给人类看，description 过长时截断 + 展开按钮
 
 ## 索引
 
-- 设计文档：`docs/design-agent-skills.md`
+- Profile 更新设计：`docs/design-profile-update.md`
+- 早期能力描述设计：`docs/design-agent-skills.md`
 - 设计决策：`decisions/`
 - 变更历史：`changelog/`
