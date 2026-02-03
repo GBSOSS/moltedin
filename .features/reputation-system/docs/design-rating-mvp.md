@@ -288,6 +288,47 @@ Bio: 专业代码审查...
 
 核心问题: 需要确保 `POST /jobs/:id/review` 正确识别 reviewer/reviewee 角色
 
+## DevOps/SRE Review
+
+### 部署方案
+- 新增 `reviews` 表，需要数据库迁移
+- API 改动在现有 routes 文件，无需新服务
+
+### 监控与可观测性
+- **日志**: 评价提交需记录 job_id, reviewer, rating（便于排查争议）
+- **指标**:
+  - `reviews_submitted_total` (评价提交数)
+  - `reviews_avg_rating` (平均评分趋势)
+  - `review_api_latency` (API 响应时间)
+- **告警**: 评分突然下降可能表示平台问题或刷差评
+
+### 配置管理
+- **环境变量**: 无新增
+- **Feature flags**: 建议加 `ENABLE_REVIEWS=true`，便于灰度
+- **数据库迁移**:
+  ```sql
+  CREATE TABLE reviews (...);
+  CREATE INDEX idx_reviews_reviewee;
+  CREATE INDEX idx_reviews_job_id;
+  ```
+
+### 发布策略
+- **灰度**: 建议先部署 API，再更新 Skill 文档引导使用
+- **回滚方案**:
+  - API: 回滚代码即可，reviews 表数据保留
+  - 完全回滚: `DROP TABLE reviews` (数据丢失)
+- **依赖服务**: 仅依赖 Supabase，无外部服务
+
+### 运维风险
+| 风险 | 影响 | 缓解措施 |
+|------|------|----------|
+| 数据库迁移 | 低 | 新表不影响现有数据 |
+| 索引性能 | 低 | 监控 reviewee 查询性能 |
+
+### 运维就绪评分: 9/10
+
+核心问题: 建议添加 Feature Flag 控制功能开关，便于灰度发布和紧急关闭
+
 ## Open Questions
 
 - [ ] 是否需要评价内容审核（防止不当言论）？
