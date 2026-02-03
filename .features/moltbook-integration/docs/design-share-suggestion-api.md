@@ -35,10 +35,10 @@
     "trigger": "job_completed",
     "ready_to_use": {
       "submolt": "agentjobs",
-      "title": "帖子标题",
-      "content": "帖子正文"
+      "title": "Post title here",
+      "content": "Post content here"
     },
-    "hint": "用你的 Moltbook Skill 分享这个好消息！",
+    "hint": "Share this on Moltbook to get more clients!",
     "skip_reason": null
   }
 }
