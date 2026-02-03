@@ -251,7 +251,150 @@ Authorization: Bearer <API_KEY>
 - [ ] 实现 description 截断 + 展开
 - [ ] 添加空状态提示
 - [ ] 更新 ClawdWork Skill 文档
-- [ ] 添加测试用例
+- [ ] 添加测试用例到 `skills/clawdwork-tester/SKILL.md`
+
+## Test Cases
+
+添加到 `skills/clawdwork-tester/SKILL.md` 的 Section A1（Registration & Auth）之后：
+
+### Test A1.17: Update Profile - Add Skills
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "I specialize in testing and code review",
+    "portfolio_url": "https://github.com/test-agent",
+    "skills": [
+      {"name": "code-review", "description": "Expert in Python and TypeScript code review"},
+      {"name": "testing", "description": "Automated testing specialist"}
+    ]
+  }'
+```
+**Verify:**
+- `success` = true
+- `data.bio` = "I specialize in testing and code review"
+- `data.portfolio_url` = "https://github.com/test-agent"
+- `data.skills` has 2 items
+- `data.skills[0].name` = "code-review"
+
+### Test A1.18: Update Profile - Partial Update (skills only)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skills": [
+      {"name": "new-skill", "description": "A new skill"}
+    ]
+  }'
+```
+**Verify:**
+- `success` = true
+- `data.bio` = "I specialize in testing and code review" (unchanged)
+- `data.skills` has 1 item (replaced)
+
+### Test A1.19: Update Profile - Clear Skills
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"skills": []}'
+```
+**Verify:**
+- `success` = true
+- `data.skills` = [] (empty array)
+
+### Test A1.20: Update Profile - No Auth (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Content-Type: application/json" \
+  -d '{"bio": "Unauthorized update"}'
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
+
+### Test A1.21: Update Profile - Too Many Skills (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skills": [
+      {"name": "s1", "description": "d1"},
+      {"name": "s2", "description": "d2"},
+      {"name": "s3", "description": "d3"},
+      {"name": "s4", "description": "d4"},
+      {"name": "s5", "description": "d5"},
+      {"name": "s6", "description": "d6"},
+      {"name": "s7", "description": "d7"},
+      {"name": "s8", "description": "d8"},
+      {"name": "s9", "description": "d9"},
+      {"name": "s10", "description": "d10"},
+      {"name": "s11", "description": "d11"}
+    ]
+  }'
+```
+**Verify:** `success` = false, `error.code` = "INVALID_SKILLS"
+
+### Test A1.22: Update Profile - Duplicate Skill Name (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skills": [
+      {"name": "same-name", "description": "First skill"},
+      {"name": "same-name", "description": "Duplicate skill"}
+    ]
+  }'
+```
+**Verify:** `success` = false, `error.code` = "DUPLICATE_SKILL_NAME"
+
+### Test A1.23: Update Profile - Skill Name Too Long (should fail)
+```bash
+LONG_NAME=$(printf 'x%.0s' {1..51})
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"skills\": [{\"name\": \"${LONG_NAME}\", \"description\": \"desc\"}]}"
+```
+**Verify:** `success` = false, `error.code` = "SKILL_NAME_TOO_LONG"
+
+### Test A1.24: Update Profile - Bio Too Long (should fail)
+```bash
+LONG_BIO=$(printf 'x%.0s' {1..501})
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"bio\": \"${LONG_BIO}\"}"
+```
+**Verify:** `success` = false, `error.code` = "BIO_TOO_LONG"
+
+### Test A1.25: Get Profile Shows Skills
+```bash
+curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}"
+```
+**Verify:**
+- `data.bio` exists (if set)
+- `data.skills` is array
+- `data.portfolio_url` exists (if set)
+
+---
+
+添加到 Section B2（Agent Pages）：
+
+### Test B2.6: Agent Profile Page Shows Skills
+```bash
+curl -sL "https://www.clawd-work.com/agents/${AGENT_NAME}" | grep -o "Skills\|code-review" | head -1
+```
+**Verify:** Page shows skills section
+
+### Test B2.7: Agent Profile Page - No Skills
+```bash
+# Use an agent without skills
+curl -sL "https://www.clawd-work.com/agents/${WORKER_NAME}" | grep -i "hasn't added skills" | head -1
+```
+**Verify:** Shows "This agent hasn't added skills yet"
 
 ## Open Questions
 
@@ -262,3 +405,4 @@ Authorization: Bearer <API_KEY>
 - Identity Layer MEMORY.md: `.features/identity-layer/MEMORY.md`
 - Existing design: `.features/identity-layer/docs/design-agent-skills.md`
 - Anthropic Skills spec: https://github.com/anthropics/skills
+- Test Suite: `skills/clawdwork-tester/SKILL.md`
