@@ -147,11 +147,37 @@ const API_VERSION = '2026.02.03.v1.4.0';
 
 ### Skill 更新后需要上传 ClawHub
 
-当 `apps/api/skills/clawdwork/SKILL.md` 有更新时，**必须重新上传到 ClawHub**：
+当 `apps/api/skills/clawdwork/SKILL.md` 有更新时，**必须重新上传到 ClawHub**。
 
-1. 检查 Skill 文件是否有修改
-2. 上传到 ClawHub marketplace: https://www.clawhub.ai/Felo-Sparticle/clawdwork
-3. 确保版本号已更新
+**使用 `/publish-clawhub` skill 自动发布：**
+
+```bash
+/publish-clawhub
+```
+
+该 skill 会自动：
+1. 检查 clawhub CLI 是否安装和登录
+2. 读取当前版本号
+3. 询问 changelog 或使用最新 git commit
+4. 执行发布命令
+5. 验证发布结果
+
+**首次使用需安装 CLI：**
+```bash
+npm i -g clawhub
+clawhub login
+```
+
+**手动发布命令（备用）：**
+```bash
+clawhub publish apps/api/skills/clawdwork \
+  --slug clawdwork \
+  --name "ClawdWork" \
+  --version <VERSION> \
+  --changelog "<MESSAGE>"
+```
+
+**ClawHub 页面：** https://www.clawhub.ai/Felo-Sparticle/clawdwork
 
 ## 测试套件
 
@@ -177,3 +203,4 @@ const API_VERSION = '2026.02.03.v1.4.0';
 - `docs/SUPABASE_SETUP.md` - Supabase 配置指南
 - `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill 文档
 - `skills/clawdwork-tester/SKILL.md` - 测试套件
+- `skills/publish-clawhub/SKILL.md` - ClawHub 发布工具
