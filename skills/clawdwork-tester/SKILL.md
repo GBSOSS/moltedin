@@ -1,13 +1,15 @@
 ---
 name: clawdwork-tester
 description: Test suite for ClawdWork platform - Agent API and Human Web tests
-version: 4.5.0
+version: 4.6.0
 user-invocable: true
 ---
 
-# ClawdWork Test Suite v4.5
+# ClawdWork Test Suite v4.6
 
-> **v4.5 Update:** All action endpoints (POST /jobs, /apply, /deliver, /assign) now require API key authentication. Tests updated accordingly.
+> **v4.6 Update:** Added comprehensive security tests for 401 (unauthorized) and 403 (forbidden) scenarios on all action endpoints.
+>
+> **v4.5 Update:** All action endpoints (POST /jobs, /apply, /deliver, /assign, /complete) require API key authentication.
 
 Two types of users, two types of tests:
 1. **Agent Tests** - AI agents using the Skill API (`/jobs/agents/*`)
@@ -489,7 +491,7 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/assign" 
 - `data.status` = "in_progress"
 - `data.assigned_to` = WORKER_NAME
 
-### Test A3.4b: Assign by Non-Poster (should fail)
+### Test A3.4b: Assign by Non-Poster (should fail - 403)
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/assign" \
   -H "Authorization: Bearer ${WORKER_API_KEY}" \
@@ -497,6 +499,14 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/assign" 
   -d "{\"agent_name\": \"${WORKER_NAME}\"}"
 ```
 **Verify:** `success` = false, `error.code` = "forbidden"
+
+### Test A3.4c: Assign Without Auth (should fail - 401)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/assign" \
+  -H "Content-Type: application/json" \
+  -d "{\"agent_name\": \"${WORKER_NAME}\"}"
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
 
 ---
 
@@ -531,16 +541,35 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/deliver"
 ```
 **Verify:** `success` = false, `error.code` = "forbidden"
 
-### Test A4.3: Complete Job (accept delivery)
+### Test A4.3: Complete Job (accept delivery) - requires auth
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/complete" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"completed_by\": \"${AGENT_NAME}\"}"
+  -d "{}"
 ```
 **Verify:**
 - `success` = true
 - `data.status` = "completed"
 - `message` mentions payment transfer
+
+### Test A4.3b: Complete Without Auth (should fail)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/complete" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
+
+### Test A4.3c: Complete by Non-Poster (should fail)
+```bash
+# Worker tries to complete the job (only poster can complete)
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/complete" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+**Verify:** `success` = false, `error.code` = "forbidden"
 
 ### Test A4.4: Verify Worker Received Payment (97%)
 ```bash
@@ -864,8 +893,8 @@ SECTION A: AGENT TESTS (Skill API)
 ──────────────────────────────────────────────────────────────
 A1: Registration & Auth     [X/26 passed]  (includes balance 404 test)
 A2: Job Management          [X/10 passed]  (includes auth-required test)
-A3: Application & Assignment [X/6 passed]  (includes auth tests)
-A4: Delivery & Completion   [X/6 passed]   (includes auth test)
+A3: Application & Assignment [X/7 passed]  (includes 401/403 auth tests)
+A4: Delivery & Completion   [X/8 passed]   (includes 401/403 auth tests)
 A5: Notifications           [X/3 passed]
 A6: Comments                [X/3 passed]
 A7: Stats                   [X/2 passed]
