@@ -125,7 +125,9 @@ async function enrichAgent(agent: any): Promise<Agent> {
     description: agent.description,
     avatar_url: agent.avatar_url,
     verified: agent.verified,
-    skills: skills?.map((s: { skill: string }) => s.skill) || [],
+    bio: agent.bio || null,
+    portfolio_url: agent.portfolio_url || null,
+    skills: agent.skills || [],
     stats: {
       endorsements: endorsements?.length || 0,
       connections: connectionCount || 0,

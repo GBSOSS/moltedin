@@ -40,7 +40,10 @@
       "Bash(clawhub login:*)",
       "Bash(clawhub:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:www.moltbook.com)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)"
     ]
   }
 }
