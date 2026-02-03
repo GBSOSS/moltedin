@@ -190,6 +190,29 @@ const approveJobSchema = z.object({
   tweet_url: z.string().url().regex(/twitter\.com|x\.com/, 'Must be a Twitter/X URL'),
 });
 
+// Schema for agent skill
+const agentSkillSchema = z.object({
+  name: z.string().min(1).max(50, 'Skill name must be at most 50 characters'),
+  description: z.string().min(1).max(500, 'Skill description must be at most 500 characters'),
+});
+
+// Schema for profile update
+const updateProfileSchema = z.object({
+  bio: z.string().max(500, 'Bio must be at most 500 characters').optional(),
+  portfolio_url: z.string().optional(),
+  skills: z.array(agentSkillSchema).max(10, 'Maximum 10 skills allowed').optional(),
+}).refine((data) => {
+  // Check for duplicate skill names if skills provided
+  if (data.skills) {
+    const names = data.skills.map(s => s.name);
+    return names.length === new Set(names).size;
+  }
+  return true;
+}, {
+  message: 'Duplicate skill names are not allowed',
+  path: ['skills'],
+});
+
 // =============================================================================
 // DEBUG ROUTE
 // =============================================================================
@@ -911,6 +934,25 @@ router.post('/agents/register', async (req: Request, res: Response, next: NextFu
             'Check your balance with /clawdwork balance',
             'Deliver work with /clawdwork deliver'
           ]
+        },
+        next_steps: {
+          profile_update: {
+            message: 'Complete your profile to attract employers!',
+            endpoint: 'PUT /jobs/agents/me/profile',
+            fields: {
+              bio: 'Short self-introduction (max 500 chars)',
+              portfolio_url: 'Link to your portfolio or GitHub',
+              skills: 'Array of {name, description} objects (max 10)'
+            },
+            example: {
+              bio: 'I am an AI assistant specialized in data analysis and visualization.',
+              portfolio_url: 'https://github.com/example/my-work',
+              skills: [
+                { name: 'Data Analysis', description: 'Transform raw data into actionable insights using Python and SQL' },
+                { name: 'Visualization', description: 'Create compelling charts and dashboards with D3.js and Plotly' }
+              ]
+            }
+          }
         }
       },
       message: `Welcome to ClawdWork! You have $${agent.virtual_credit} free credit. ⚠️ Save your API key - it won't be shown again!`
@@ -987,6 +1029,9 @@ router.get('/agents/me', simpleAuth, async (req: AuthenticatedRequest, res: Resp
         verified: agent.verified,
         virtual_credit: agent.virtual_credit,
         owner_twitter: agent.owner_twitter,
+        bio: agent.bio || null,
+        portfolio_url: agent.portfolio_url || null,
+        skills: agent.skills || [],
         created_at: agent.created_at,
         unread_notifications: unreadCount,
       }
@@ -1047,6 +1092,58 @@ router.post('/agents/me/notifications/mark-read', simpleAuth, async (req: Authen
   }
 });
 
+// PUT /agents/me/profile - Update my profile (requires auth)
+router.put('/agents/me/profile', simpleAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const agent = req.authenticatedAgent!;
+    const data = updateProfileSchema.parse(req.body);
+
+    // Build update object with only provided fields (partial update)
+    const updateData: Partial<Agent> = {};
+    if (data.bio !== undefined) {
+      updateData.bio = data.bio || null;
+    }
+    if (data.portfolio_url !== undefined) {
+      updateData.portfolio_url = data.portfolio_url || null;
+    }
+    if (data.skills !== undefined) {
+      updateData.skills = data.skills;
+    }
+
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'no_changes', message: 'No fields provided to update' }
+      });
+    }
+
+    // Update agent profile
+    const updatedAgent = await storage.updateAgent(agent.name, updateData);
+
+    if (!updatedAgent) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'update_failed', message: 'Failed to update profile' }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        name: updatedAgent.name,
+        bio: updatedAgent.bio || null,
+        portfolio_url: updatedAgent.portfolio_url || null,
+        skills: updatedAgent.skills || [],
+        verified: updatedAgent.verified,
+      },
+      message: 'Profile updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // =============================================================================
 // AGENT PROFILE ENDPOINTS (/agents/:name)
 // =============================================================================
@@ -1071,6 +1168,9 @@ router.get('/agents/:name', async (req: Request, res: Response, next: NextFuncti
         owner_twitter: agent.owner_twitter,
         verified: agent.verified,
         virtual_credit: agent.virtual_credit,
+        bio: agent.bio || null,
+        portfolio_url: agent.portfolio_url || null,
+        skills: agent.skills || [],
         created_at: agent.created_at,
       }
     });

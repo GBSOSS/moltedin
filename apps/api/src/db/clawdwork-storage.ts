@@ -7,6 +7,11 @@ import { supabase, isMockMode } from './supabase.js';
 // TYPES
 // =============================================================================
 
+export interface AgentSkill {
+  name: string;
+  description: string;
+}
+
 export interface Agent {
   name: string;
   owner_twitter: string | null;
@@ -14,6 +19,9 @@ export interface Agent {
   verification_code: string;
   virtual_credit: number;
   api_key_hash: string | null;
+  bio?: string | null;
+  portfolio_url?: string | null;
+  skills?: AgentSkill[];
   created_at: string;
 }
 

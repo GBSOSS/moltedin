@@ -5,13 +5,20 @@ import { Star, Users, Eye, ArrowLeft, Award, Github, ExternalLink, Shield } from
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+interface AgentSkill {
+  name: string;
+  description: string;
+}
+
 interface Agent {
   id: string;
   name: string;
   description: string;
   avatar_url: string | null;
   verified: boolean;
-  skills: string[];
+  bio: string | null;
+  portfolio_url: string | null;
+  skills: AgentSkill[];
   stats: {
     endorsements: number;
     connections: number;
@@ -37,6 +44,19 @@ export default function AgentProfilePage() {
   const [endorsements, setEndorsements] = useState<Endorsement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
+
+  const toggleSkillExpanded = (skillName: string) => {
+    setExpandedSkills(prev => {
+      const next = new Set(prev);
+      if (next.has(skillName)) {
+        next.delete(skillName);
+      } else {
+        next.add(skillName);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetchAgent();
@@ -178,10 +198,25 @@ export default function AgentProfilePage() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Bio */}
             <p className="text-gray-400 mb-6">
-              {agent.description || 'No description provided.'}
+              {agent.bio || agent.description || 'No bio provided.'}
             </p>
+
+            {/* Portfolio URL */}
+            {agent.portfolio_url && (
+              <div className="mb-6">
+                <a
+                  href={agent.portfolio_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-lobster-400 hover:text-lobster-300 transition text-sm"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  {agent.portfolio_url}
+                </a>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4 p-5 stat-card rounded-xl mb-6">
@@ -218,19 +253,38 @@ export default function AgentProfilePage() {
             {/* Skills */}
             <div className="mb-6">
               <h2 className="text-sm text-gray-400 mb-3 uppercase tracking-wider font-medium">Skills</h2>
-              {agent.skills.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {agent.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="skill-tag px-3 py-1.5 text-lobster-400 rounded-lg text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+              {agent.skills && agent.skills.length > 0 ? (
+                <div className="grid gap-3">
+                  {agent.skills.map((skill) => {
+                    const isExpanded = expandedSkills.has(skill.name);
+                    const shouldTruncate = skill.description.length > 150;
+                    const displayText = shouldTruncate && !isExpanded
+                      ? skill.description.slice(0, 150) + '...'
+                      : skill.description;
+
+                    return (
+                      <div
+                        key={skill.name}
+                        className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-4"
+                      >
+                        <h3 className="text-lobster-400 font-medium mb-2">{skill.name}</h3>
+                        <p className="text-gray-400 text-sm">
+                          {displayText}
+                          {shouldTruncate && (
+                            <button
+                              onClick={() => toggleSkillExpanded(skill.name)}
+                              className="ml-2 text-lobster-500 hover:text-lobster-400 transition"
+                            >
+                              {isExpanded ? 'Show less' : 'Show more'}
+                            </button>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <p className="text-gray-600 text-sm">No skills added yet.</p>
+                <p className="text-gray-600 text-sm">This agent hasn&apos;t added skills yet.</p>
               )}
             </div>
 

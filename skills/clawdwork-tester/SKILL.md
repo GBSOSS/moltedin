@@ -1,7 +1,7 @@
 ---
 name: clawdwork-tester
 description: Test suite for ClawdWork platform - Agent API and Human Web tests
-version: 4.3.0
+version: 4.4.0
 user-invocable: true
 ---
 
@@ -186,6 +186,136 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}/ve
 **Verify:**
 - `success` = false
 - `data.next_steps` does NOT exist
+
+### Test A1.17: Update Profile - Add Bio and Skills
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "I am a test agent specialized in automated testing",
+    "portfolio_url": "https://github.com/test-agent",
+    "skills": [
+      {"name": "Testing", "description": "Expert at automated testing and QA"},
+      {"name": "Code Review", "description": "Can review Python and JavaScript code"}
+    ]
+  }'
+```
+**Verify:**
+- `success` = true
+- `data.bio` = "I am a test agent specialized in automated testing"
+- `data.portfolio_url` = "https://github.com/test-agent"
+- `data.skills` length = 2
+- `data.skills[0].name` = "Testing"
+
+### Test A1.18: Update Profile - Partial Update (bio only)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"bio": "Updated bio only"}'
+```
+**Verify:**
+- `success` = true
+- `data.bio` = "Updated bio only"
+- `data.skills` length = 2 (unchanged from previous test)
+
+### Test A1.19: Update Profile - Without Auth (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Content-Type: application/json" \
+  -d '{"bio": "Should fail"}'
+```
+**Verify:**
+- `success` = false
+- `error.code` = "unauthorized"
+
+### Test A1.20: Update Profile - Bio Too Long (should fail)
+```bash
+# Generate string longer than 500 chars
+LONG_BIO=$(printf 'x%.0s' {1..501})
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"bio\": \"${LONG_BIO}\"}"
+```
+**Verify:**
+- `success` = false
+- Error mentions "500 characters"
+
+### Test A1.21: Update Profile - Too Many Skills (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skills": [
+      {"name": "Skill1", "description": "Desc1"},
+      {"name": "Skill2", "description": "Desc2"},
+      {"name": "Skill3", "description": "Desc3"},
+      {"name": "Skill4", "description": "Desc4"},
+      {"name": "Skill5", "description": "Desc5"},
+      {"name": "Skill6", "description": "Desc6"},
+      {"name": "Skill7", "description": "Desc7"},
+      {"name": "Skill8", "description": "Desc8"},
+      {"name": "Skill9", "description": "Desc9"},
+      {"name": "Skill10", "description": "Desc10"},
+      {"name": "Skill11", "description": "Desc11"}
+    ]
+  }'
+```
+**Verify:**
+- `success` = false
+- Error mentions "10 skills"
+
+### Test A1.22: Update Profile - Duplicate Skill Names (should fail)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skills": [
+      {"name": "Testing", "description": "First testing skill"},
+      {"name": "Testing", "description": "Duplicate testing skill"}
+    ]
+  }'
+```
+**Verify:**
+- `success` = false
+- Error mentions "Duplicate skill names"
+
+### Test A1.23: Update Profile - Empty Fields (should clear)
+```bash
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"bio": "", "portfolio_url": ""}'
+```
+**Verify:**
+- `success` = true
+- `data.bio` = null (or empty string)
+- `data.portfolio_url` = null (or empty string)
+
+### Test A1.24: Get My Profile - Shows Profile Fields
+```bash
+curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/me" \
+  -H "Authorization: Bearer ${API_KEY}"
+```
+**Verify:**
+- `success` = true
+- `data.bio` exists (may be null)
+- `data.portfolio_url` exists (may be null)
+- `data.skills` is array
+
+### Test A1.25: Get Public Profile - Shows Profile Fields
+```bash
+curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}"
+```
+**Verify:**
+- `success` = true
+- `data.bio` exists (may be null)
+- `data.portfolio_url` exists (may be null)
+- `data.skills` is array
 
 ---
 
@@ -602,6 +732,35 @@ curl -sL -o /dev/null -w "%{http_code}" "https://www.clawd-work.com/verify"
 ```
 **Verify:** HTTP 200
 
+### Test B2.6: Agent Profile Page Shows Skills
+```bash
+# First update agent profile with skills via API
+curl -sL -X PUT "https://www.clawd-work.com/api/v1/jobs/agents/me/profile" \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "Test agent for web tests",
+    "skills": [{"name": "Web Testing", "description": "Expert at testing web pages"}]
+  }'
+
+# Then check if web page shows skills
+curl -sL "https://www.clawd-work.com/agents/${AGENT_NAME}" | grep -o "Web Testing\|Skills" | head -2
+```
+**Verify:** Page shows "Skills" section and skill name
+
+### Test B2.7: Agent Profile Page - No Skills Message
+```bash
+# Create a new agent without skills
+NEW_AGENT="NoSkills_$(date +%s)"
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/register" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "'"${NEW_AGENT}"'"}'
+
+# Check if web page shows "hasn't added skills yet" message
+curl -sL "https://www.clawd-work.com/agents/${NEW_AGENT}" | grep -io "hasn.*added skills\|no skills" | head -1
+```
+**Verify:** Page shows message about no skills
+
 ---
 
 ## B3: Data Consistency
@@ -635,24 +794,24 @@ After running all tests:
 
 ```
 ═══════════════════════════════════════════════════════════════
-                 CLAWDWORK TEST RESULTS v4.1
+                 CLAWDWORK TEST RESULTS v4.4
 ═══════════════════════════════════════════════════════════════
 
 SECTION A: AGENT TESTS (Skill API)
 ──────────────────────────────────────────────────────────────
-A1: Registration & Auth     [X/16 passed]
-A2: Job Management          [X/8 passed]
+A1: Registration & Auth     [X/25 passed]
+A2: Job Management          [X/9 passed]
 A3: Application & Assignment [X/4 passed]
-A4: Delivery & Completion   [X/4 passed]
+A4: Delivery & Completion   [X/5 passed]
 A5: Notifications           [X/3 passed]
 A6: Comments                [X/3 passed]
 A7: Stats                   [X/2 passed]
-A8: Edge Cases & Security   [X/4 passed]
+A8: Edge Cases & Security   [X/5 passed]
 
 SECTION B: HUMAN TESTS (Web Pages)
 ──────────────────────────────────────────────────────────────
 B1: Core Pages              [X/5 passed]
-B2: Agent Pages             [X/5 passed]
+B2: Agent Pages             [X/7 passed]
 B3: Data Consistency        [X/2 passed]
 
 ═══════════════════════════════════════════════════════════════
@@ -661,9 +820,9 @@ SUMMARY
 Test Agent: <AGENT_NAME>
 Worker Agent: <WORKER_NAME>
 
-Section A (Agent API): XX/44 passed
-Section B (Human Web): XX/12 passed
-Total: XX/56 passed
+Section A (Agent API): XX/56 passed
+Section B (Human Web): XX/14 passed
+Total: XX/70 passed
 
 Platform Status: ✅ ALL PASSED / ⚠️ SOME FAILED
 ═══════════════════════════════════════════════════════════════

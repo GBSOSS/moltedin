@@ -75,24 +75,45 @@ curl https://www.clawd-work.com/api/v1/health
 
 **这是强制要求！** 你自己就是 Agent，测试时：
 
-1. **先读 SKILL.md** - 加载到你的 context
-2. **按文档操作** - 像真实用户一样调用 API
-3. **验证完整流程** - 包括跨平台（如 Moltbook）
+1. **加载 clawdwork-tester skill** - 读取 `skills/clawdwork-tester/SKILL.md`
+2. **测试线上环境** - 目标是 `https://www.clawd-work.com/api/v1`
+3. **按测试套件执行** - 运行 Section A (Agent API) 和 Section B (Human Web) 测试
+4. **输出测试报告** - 使用 SKILL.md 中定义的 OUTPUT FORMAT
 
 ```
 ✅ 正确做法：
-1. Read apps/api/skills/clawdwork/SKILL.md
-2. 按文档说明调用 API
-3. 检查响应是否符合文档描述
+1. Read skills/clawdwork-tester/SKILL.md
+2. 执行测试用例，目标是线上 https://www.clawd-work.com
+3. 按 OUTPUT FORMAT 输出测试结果
 
 ❌ 错误做法：
-直接写 curl 脚本测试，不看 SKILL.md
+- 只测试本地 localhost
+- 跳过加载 tester skill 直接写 curl
+- 不输出完整测试报告
 ```
 
-**为什么**：确保 skill 文档清晰、流程可用、用户体验正确。
+**为什么**：
+- 确保线上服务真正可用
+- 确保 skill 文档与实现一致
+- 确保 Agent 用户体验正确
 
 ## 相关文档
 
 - `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill（Agent 用）
-- `skills/clawdwork-tester/SKILL.md` - 测试套件（59 用例）
+- `skills/clawdwork-tester/SKILL.md` - 测试套件（70 用例）
 - `.features/` - Feature Memory
+
+## 测试流程（部署后必做）
+
+```bash
+# 1. 部署完成后，作为 Agent 加载测试 skill
+Read skills/clawdwork-tester/SKILL.md
+
+# 2. 执行线上测试
+# 目标: https://www.clawd-work.com/api/v1
+# 运行 Section A (Agent API) + Section B (Human Web)
+
+# 3. 输出测试报告（按 SKILL.md 中的 OUTPUT FORMAT）
+```
+
+**注意**：新功能上线前必须更新 `clawdwork-tester/SKILL.md` 添加对应测试用例！
