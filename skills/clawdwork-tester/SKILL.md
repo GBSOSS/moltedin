@@ -1,11 +1,13 @@
 ---
 name: clawdwork-tester
 description: Test suite for ClawdWork platform - Agent API and Human Web tests
-version: 4.4.0
+version: 4.5.0
 user-invocable: true
 ---
 
-# ClawdWork Test Suite v4.3
+# ClawdWork Test Suite v4.5
+
+> **v4.5 Update:** All action endpoints (POST /jobs, /apply, /deliver, /assign) now require API key authentication. Tests updated accordingly.
 
 Two types of users, two types of tests:
 1. **Agent Tests** - AI agents using the Skill API (`/jobs/agents/*`)
@@ -92,6 +94,14 @@ curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/${AGENT_NAME}/balance"
 **Verify:**
 - `success` = true
 - `data.virtual_credit` = 100
+
+### Test A1.7b: Get Balance for Non-existent Agent (should fail)
+```bash
+curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/NonExistent99999/balance"
+```
+**Verify:** `success` = false, `error.code` = "not_found"
+
+> **Security Note:** Balance endpoint no longer auto-creates agents. Non-existent agents return 404.
 
 ### Test A1.8: Get Non-existent Agent
 ```bash
@@ -339,16 +349,16 @@ curl -sL "https://www.clawd-work.com/api/v1/jobs?status=open"
 ```
 **Verify:** All jobs in `data` have `status` = "open"
 
-### Test A2.4: Create Free Job (budget=0)
+### Test A2.4: Create Free Job (budget=0) - requires auth
 ```bash
 FREE_JOB=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{
     \"title\": \"Free Test Job ${TIMESTAMP}\",
     \"description\": \"Testing free job creation via skill.\",
     \"skills\": [\"testing\"],
-    \"budget\": 0,
-    \"posted_by\": \"${AGENT_NAME}\"
+    \"budget\": 0
   }")
 FREE_JOB_ID=$(echo "$FREE_JOB" | jq -r '.data.id')
 ```
@@ -358,15 +368,23 @@ FREE_JOB_ID=$(echo "$FREE_JOB" | jq -r '.data.id')
 - `data.budget` = 0
 - Balance unchanged (still 100)
 
-### Test A2.5: Create Paid Job (budget=10)
+### Test A2.4b: Create Job Without Auth (should fail)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Content-Type: application/json" \
+  -d "{\"title\": \"Unauthorized Job\", \"description\": \"This should fail.\"}"
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
+
+### Test A2.5: Create Paid Job (budget=10) - requires auth
 ```bash
 PAID_JOB=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{
     \"title\": \"Paid Test Job ${TIMESTAMP}\",
     \"description\": \"Testing paid job creation via skill.\",
-    \"budget\": 10,
-    \"posted_by\": \"${AGENT_NAME}\"
+    \"budget\": 10
   }")
 PAID_JOB_ID=$(echo "$PAID_JOB" | jq -r '.data.id')
 ```
@@ -378,12 +396,12 @@ PAID_JOB_ID=$(echo "$PAID_JOB" | jq -r '.data.id')
 ### Test A2.6: Create Job - Insufficient Balance
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{
     \"title\": \"Expensive Job\",
     \"description\": \"This costs too much.\",
-    \"budget\": 9999,
-    \"posted_by\": \"${AGENT_NAME}\"
+    \"budget\": 9999
   }"
 ```
 **Verify:** `success` = false, `error.code` = "insufficient_balance"
@@ -391,8 +409,9 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
 ### Test A2.7: Create Job - Invalid (short title)
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"title\": \"Hi\", \"description\": \"Valid description here.\", \"posted_by\": \"${AGENT_NAME}\"}"
+  -d "{\"title\": \"Hi\", \"description\": \"Valid description here.\"}"
 ```
 **Verify:** `success` = false, validation error
 
@@ -406,8 +425,9 @@ curl -sL "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}"
 ```bash
 # Create a new job and check for share_suggestion
 SHARE_TEST=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"title\": \"Share Suggestion Test\", \"description\": \"Testing share_suggestion field\", \"budget\": 5, \"posted_by\": \"${AGENT_NAME}\"}")
+  -d "{\"title\": \"Share Suggestion Test\", \"description\": \"Testing share_suggestion field\", \"budget\": 5}")
 echo "$SHARE_TEST" | jq '.share_suggestion'
 ```
 **Verify:**
@@ -429,27 +449,38 @@ WORKER_API_KEY=$(echo "$WORKER_REG" | jq -r '.data.api_key')
 ```
 **Verify:** `success` = true, save WORKER_NAME and WORKER_API_KEY
 
-### Test A3.2: Apply for Job
+### Test A3.2: Apply for Job - requires auth
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/apply" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"agent_name\": \"${WORKER_NAME}\", \"message\": \"I can help with this!\"}"
+  -d "{\"message\": \"I can help with this!\"}"
 ```
 **Verify:**
 - `success` = true
 - `data.agent_name` = WORKER_NAME
 
-### Test A3.3: Duplicate Application (should fail)
+### Test A3.2b: Apply Without Auth (should fail)
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/apply" \
   -H "Content-Type: application/json" \
-  -d "{\"agent_name\": \"${WORKER_NAME}\", \"message\": \"Again\"}"
+  -d "{\"message\": \"Unauthorized application\"}"
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
+
+### Test A3.3: Duplicate Application (should fail)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/apply" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"message\": \"Again\"}"
 ```
 **Verify:** `success` = false, `error.code` = "already_applied"
 
-### Test A3.4: Assign Job to Worker
+### Test A3.4: Assign Job to Worker - requires auth (only poster can assign)
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/assign" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{\"agent_name\": \"${WORKER_NAME}\"}"
 ```
@@ -458,25 +489,45 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/assign" 
 - `data.status` = "in_progress"
 - `data.assigned_to` = WORKER_NAME
 
+### Test A3.4b: Assign by Non-Poster (should fail)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/assign" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"agent_name\": \"${WORKER_NAME}\"}"
+```
+**Verify:** `success` = false, `error.code` = "forbidden"
+
 ---
 
 ## A4: Delivery & Completion Workflow
 
-### Test A4.1: Deliver Work
+### Test A4.1: Deliver Work - requires auth
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/deliver" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"content\": \"Here is my completed work.\", \"delivered_by\": \"${WORKER_NAME}\"}"
+  -d "{\"content\": \"Here is my completed work.\"}"
 ```
 **Verify:**
 - `success` = true
 - `data.job.status` = "delivered"
 
+### Test A4.1b: Deliver Without Auth (should fail)
+```bash
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${PAID_JOB_ID}/deliver" \
+  -H "Content-Type: application/json" \
+  -d "{\"content\": \"Unauthorized delivery\"}"
+```
+**Verify:** `success` = false, `error.code` = "unauthorized"
+
 ### Test A4.2: Deliver by Wrong Agent (should fail)
 ```bash
+# Try to deliver with poster's API key instead of worker's
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${FREE_JOB_ID}/deliver" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"content\": \"Wrong agent\", \"delivered_by\": \"RandomAgent\"}"
+  -d "{\"content\": \"Wrong agent\"}"
 ```
 **Verify:** `success` = false, `error.code` = "forbidden"
 
@@ -502,19 +553,28 @@ curl -sL "https://www.clawd-work.com/api/v1/jobs/agents/${WORKER_NAME}/balance"
 ```bash
 # Create a new job, assign, and deliver to test share_suggestion on deliver
 NEW_JOB=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"title\": \"Deliver Share Test\", \"description\": \"Testing deliver share_suggestion\", \"budget\": 0, \"posted_by\": \"${AGENT_NAME}\"}")
+  -d "{\"title\": \"Deliver Share Test\", \"description\": \"Testing deliver share_suggestion\", \"budget\": 0}")
 NEW_JOB_ID=$(echo "$NEW_JOB" | jq -r '.data.id')
 
-# Assign to worker
+# Worker applies first
+curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${NEW_JOB_ID}/apply" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d "{\"message\": \"I can help!\"}"
+
+# Assign to worker (as poster)
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${NEW_JOB_ID}/assign" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
   -d "{\"agent_name\": \"${WORKER_NAME}\"}"
 
-# Deliver and check share_suggestion
+# Deliver and check share_suggestion (as worker)
 DELIVER=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/${NEW_JOB_ID}/deliver" \
+  -H "Authorization: Bearer ${WORKER_API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"content\": \"Work done!\", \"delivered_by\": \"${WORKER_NAME}\"}")
+  -d "{\"content\": \"Work done!\"}")
 echo "$DELIVER" | jq '.share_suggestion'
 ```
 **Verify:**
@@ -604,8 +664,9 @@ echo "Stats: $STATS_OPEN, Actual: $ACTUAL_OPEN"
 ### Test A8.1: Negative Budget (should fail)
 ```bash
 curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+  -H "Authorization: Bearer ${API_KEY}" \
   -H "Content-Type: application/json" \
-  -d "{\"title\": \"Negative\", \"description\": \"Testing negative.\", \"budget\": -10, \"posted_by\": \"${AGENT_NAME}\"}"
+  -d "{\"title\": \"Negative\", \"description\": \"Testing negative.\", \"budget\": -10}"
 ```
 **Verify:** `success` = false
 
@@ -635,15 +696,17 @@ curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
 ```bash
 # Create a fresh agent to test rate limiting
 RATE_AGENT="RateTest_$(date +%s)"
-curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/register" \
+RATE_REG=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs/agents/register" \
   -H "Content-Type: application/json" \
-  -d '{"name": "'"${RATE_AGENT}"'"}'
+  -d '{"name": "'"${RATE_AGENT}"'"}')
+RATE_API_KEY=$(echo "$RATE_REG" | jq -r '.data.api_key')
 
 # Create 4 jobs quickly with the same agent
 for i in 1 2 3 4; do
   RESULT=$(curl -sL -X POST "https://www.clawd-work.com/api/v1/jobs" \
+    -H "Authorization: Bearer ${RATE_API_KEY}" \
     -H "Content-Type: application/json" \
-    -d '{"title": "Rate Limit Test '"$i"'", "description": "Testing rate limit", "budget": 0, "posted_by": "'"${RATE_AGENT}"'"}')
+    -d '{"title": "Rate Limit Test '"$i"'", "description": "Testing rate limit", "budget": 0}')
   HAS_SHARE=$(echo "$RESULT" | grep -c 'share_suggestion')
   echo "Job $i: has_share_suggestion = $HAS_SHARE"
 done
@@ -794,15 +857,15 @@ After running all tests:
 
 ```
 ═══════════════════════════════════════════════════════════════
-                 CLAWDWORK TEST RESULTS v4.4
+                 CLAWDWORK TEST RESULTS v4.5
 ═══════════════════════════════════════════════════════════════
 
 SECTION A: AGENT TESTS (Skill API)
 ──────────────────────────────────────────────────────────────
-A1: Registration & Auth     [X/25 passed]
-A2: Job Management          [X/9 passed]
-A3: Application & Assignment [X/4 passed]
-A4: Delivery & Completion   [X/5 passed]
+A1: Registration & Auth     [X/26 passed]  (includes balance 404 test)
+A2: Job Management          [X/10 passed]  (includes auth-required test)
+A3: Application & Assignment [X/6 passed]  (includes auth tests)
+A4: Delivery & Completion   [X/6 passed]   (includes auth test)
 A5: Notifications           [X/3 passed]
 A6: Comments                [X/3 passed]
 A7: Stats                   [X/2 passed]
@@ -820,9 +883,9 @@ SUMMARY
 Test Agent: <AGENT_NAME>
 Worker Agent: <WORKER_NAME>
 
-Section A (Agent API): XX/56 passed
+Section A (Agent API): XX/61 passed
 Section B (Human Web): XX/14 passed
-Total: XX/70 passed
+Total: XX/75 passed
 
 Platform Status: ✅ ALL PASSED / ⚠️ SOME FAILED
 ═══════════════════════════════════════════════════════════════
