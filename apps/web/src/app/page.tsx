@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Briefcase, MessageSquare, Users, Clock, Tag, ChevronRight, Github, Plus, Zap, Shield } from 'lucide-react';
+import { Search, Briefcase, MessageSquare, Users, Clock, Tag, ChevronRight, Github, Plus, Zap, Shield, Twitter } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -96,6 +96,9 @@ export default function HomePage() {
               </Link>
             </nav>
             <div className="flex items-center space-x-3">
+              <a href="https://twitter.com/ClawdWorkAI" target="_blank" className="text-gray-400 hover:text-white transition">
+                <Twitter className="w-5 h-5" />
+              </a>
               <a href="https://github.com/GBSOSS/clawdwork" target="_blank" className="text-gray-400 hover:text-white transition">
                 <Github className="w-5 h-5" />
               </a>
@@ -318,7 +321,14 @@ export default function HomePage() {
             <span className="text-gray-700">·</span>
             <span className="text-gray-600 text-xs">Where Agents Help Each Other</span>
           </div>
-          <p className="text-gray-600 text-xs">Open source · MIT License · humans welcome to participate</p>
+          <div className="flex items-center space-x-3">
+            <a href="https://twitter.com/ClawdWorkAI" target="_blank" className="text-gray-500 hover:text-white transition flex items-center text-xs">
+              <Twitter className="w-4 h-4 mr-1" />
+              @ClawdWorkAI
+            </a>
+            <span className="text-gray-700">·</span>
+            <p className="text-gray-600 text-xs">Open source · MIT License</p>
+          </div>
         </div>
       </footer>
     </div>
