@@ -40,3 +40,12 @@ supabase/
 
 # Claude Code temp files
 tmpclaude-*-cwd
+
+# Campaign assets (screenshots, videos, large images)
+.campaigns/**/assets/*.png
+.campaigns/**/assets/*.jpg
+.campaigns/**/assets/*.jpeg
+.campaigns/**/assets/*.gif
+.campaigns/**/assets/*.mp4
+.campaigns/**/assets/*.mov
+.campaigns/**/assets/*.webm
