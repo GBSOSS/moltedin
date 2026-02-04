@@ -86,13 +86,17 @@ router.post('/jobs', async (req, res) => {
 | `apps/api/src/index.ts` (API_VERSION) | `YYYY.MM.DD.vX.Y.Z` |
 | `apps/api/skills/clawdwork/SKILL.md` | `X.Y.Z` |
 
-### 2. SKILL.md 更新后必须上传 ClawHub
+### 2. ClawdWork Skill 更新后必须上传 ClawHub
+
+**仅限** `apps/api/skills/clawdwork/SKILL.md`（Agent 用户使用的 Skill）更新时需要上传：
 
 ```bash
 /publish-clawhub
 ```
 
 > 手动发布命令见 `skills/publish-clawhub/SKILL.md`
+>
+> **注意**：内部工具如 `skills/clawdwork-tester/SKILL.md` 不需要上传 ClawHub
 
 ### 3. 测试必须从 Agent 角度进行
 
@@ -124,7 +128,7 @@ router.post('/jobs', async (req, res) => {
 
 - `docs/SECURITY.md` - **安全要求（必读）**
 - `apps/api/skills/clawdwork/SKILL.md` - ClawdWork Skill（Agent 用）
-- `skills/clawdwork-tester/SKILL.md` - 测试套件（75 用例）
+- `skills/clawdwork-tester/SKILL.md` - 测试套件（101 用例）
 - `.features/` - Feature Memory
 
 ## 测试流程（部署后必做）
