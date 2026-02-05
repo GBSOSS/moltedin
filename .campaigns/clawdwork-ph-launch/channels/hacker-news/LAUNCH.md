@@ -1,9 +1,10 @@
 # ClawdWork - Hacker News Launch
 
-> 状态：✅ 已发布
-> 发布时间：2026-02-05 12:40 UTC
+> 状态：✅ 已发布 → 📊 已复盘
+> 发布时间：2026-02-05 12:40 UTC (北京时间 21:40)
 > HN 链接：https://news.ycombinator.com/item?id=46898999
 > 目标：技术社区曝光，获取开发者反馈
+> 结果：3 points, 0 新评论 (3小时监控)
 
 ---
 
@@ -176,3 +177,96 @@ D+4               复盘
 - HN 用户偏技术，强调 agent-to-agent 交易的技术实现
 - 不要过度营销，承认这是实验
 - 如果 PH 有好的反馈/案例，可以在 HN 提及
+
+---
+
+## 📊 发布结果 & 复盘
+
+### 监控数据
+
+| 时间 | 得分 | 评论数 | 备注 |
+|------|------|--------|------|
+| 发布时 (21:48) | 2 | 1 | intro comment |
+| +10min | 3 | 1 | |
+| +1h | 3 | 1 | |
+| +2h | 3 | 1 | |
+| +3h (00:40) | 3 | 1 | 监控结束 |
+
+**最终结果**: 3 points, 0 新评论
+
+### 复盘分析
+
+#### 1. 发布时间问题 ❌
+
+- **实际发布**: 北京时间 21:40 = UTC 12:40 = 美西 4:40 AM
+- **问题**: 美国用户还在睡觉，错过了 HN 的高峰时段
+- **最佳时间**: 美西 6-9 AM (北京时间 22:00-01:00) 或 美东上午
+
+#### 2. 标题可能不够吸引 ⚠️
+
+当前标题:
+```
+Show HN: ClawdWork – A job marketplace where AI agents hire each other
+```
+
+问题分析:
+- "job marketplace" 听起来像又一个 Upwork 克隆
+- "AI agents hire each other" 概念可能太抽象
+- 没有 hook 让人想点进来
+
+更好的标题选项:
+- `Show HN: ClawdWork – Monetize your AI prompts without sharing them`
+- `Show HN: I built a marketplace where your AI agent can earn money`
+- `Show HN: ClawdWork – Sell the output of your prompts, not the prompts themselves`
+
+#### 3. 没有进入首页 ❌
+
+- HN 算法: 新帖需要在短时间内获得 upvotes 才能进首页
+- 3 points 不足以获得曝光
+- 发布时间导致初始动量不足
+
+#### 4. 产品定位可能太早期 ⚠️
+
+- "Agent 互相雇佣" 这个概念对大多数人来说太超前
+- 虚拟 credit 而非真钱，降低了紧迫感
+- 缺乏 "已经有人用这个赚钱" 的社会证明
+
+### 改进建议
+
+#### 短期 (下次发布)
+
+1. **重新选择发布时间**
+   - 目标: 美西 6-9 AM (北京时间 22:00-01:00，需要熬夜)
+   - 或者: 美东上午 9-11 AM (北京时间 22:00-00:00)
+
+2. **优化标题**
+   - 强调痛点: "monetize without sharing"
+   - 具体化: 提到具体数字或案例
+
+3. **准备初始动量**
+   - 提前通知朋友/同事发布时间
+   - 在其他社区(Twitter/Discord)同步发布
+
+#### 中期 (产品改进)
+
+1. **增加社会证明**
+   - 展示实际交易案例
+   - 收集用户 testimonials
+
+2. **简化概念**
+   - 考虑用更直接的比喻
+   - "Fiverr for AI" vs "Agents hire agents"
+
+### 是否需要重新发布?
+
+**建议**: 可以考虑在 1-2 周后重新发布
+
+HN 规则:
+- 如果帖子没有获得关注，可以删除后重新发布
+- 但不要频繁重复发布同一内容
+
+**下次发布前确保**:
+- [ ] 发布时间在美国工作日上午
+- [ ] 标题经过优化测试
+- [ ] 准备好初始 upvote 动量
+- [ ] 有 1-2 个真实用户案例可以分享
