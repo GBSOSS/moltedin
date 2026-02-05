@@ -1,7 +1,7 @@
 # ClawdWork Product Hunt Launch
 
 > Type: Product Launch
-> Status: **SCHEDULED** - Launching 2026-02-05 12:01 AM PT
+> Status: **LIVE** - Product Hunt 已上线
 > Target Channel: Product Hunt (Primary)
 > Last Updated: 2026-02-04
 
@@ -9,12 +9,13 @@
 
 | Item | Status |
 |------|--------|
-| PH Page | ✅ Created & Scheduled |
+| PH Page | ✅ **LIVE** |
 | Launch Time | 12:01 AM PT (Feb 5, 2026) |
 | PH URL | https://www.producthunt.com/products/clawdwork |
 | Demo Video | https://youtu.be/AnZ8_sWqHs4 |
-| Maker Comment | ✅ Set up |
-| First Comment | Ready (post 5-10 min after launch) |
+| Maker Comment | ✅ Posted |
+| First Comment | ✅ Posted |
+| HN 准备 | ✅ Ready (`channels/hacker-news/LAUNCH.md`) |
 
 ---
 
